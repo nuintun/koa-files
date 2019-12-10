@@ -18,10 +18,32 @@
     "send",
     "serve"
   ],
+  "engines": {
+    "node": ">=8.6"
+  },
   "author": "nuintun",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/nuintun/koa-files/issues"
   },
-  "homepage": "https://github.com/nuintun/koa-files#readme"
+  "homepage": "https://github.com/nuintun/koa-files#readme",
+  "dependencies": {
+    "ms": "^2.1.2",
+    "etag": "^1.8.1",
+    "fresh": "^0.5.2",
+    "tslib": "^1.10.0",
+    "destroy": "^1.0.4",
+    "encodeurl": "^1.0.2",
+    "micromatch": "^4.0.2",
+    "escape-html": "^1.0.3",
+    "mime-types": "^2.1.25",
+    "range-parser": "^1.2.1"
+  },
+  "devDependencies": {
+    "del": "^5.1.0",
+    "rollup": "^1.27.9",
+    "typescript": "^3.7.3",
+    "rollup-plugin-typescript2": "^0.25.3",
+    "rollup-plugin-node-resolve": "^5.2.0"
+  }
 }
