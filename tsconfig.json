@@ -11,6 +11,7 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],

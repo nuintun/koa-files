@@ -1,48 +1,21 @@
+/**
+ * @module utils
+ * @license MIT
+ * @author nuintun
+ */
+
 import { relative } from 'path';
 
-const toString: () => string = Object.prototype.toString;
 const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
 
 /**
- * @function typeOf
- * @description The data type judgment
- * @param {any} value
- * @param {string} type
- * @returns {boolean}
- */
-export function typeOf(value: any, type: string): boolean {
-  // Format type
-  type = String(type).toLowerCase();
-
-  // Switch
-  switch (type) {
-    case 'nan':
-      return Number.isNaN(value);
-    case 'null':
-      return value === null;
-    case 'array':
-      return Array.isArray(value);
-    case 'function':
-      return typeof value === 'function';
-    case 'undefined':
-      return value === undefined;
-    default:
-      // Get real type
-      const realType = toString.call(value).toLowerCase();
-
-      // Is other
-      return realType === '[object ' + type + ']';
-  }
-}
-
-/**
- * @function isOutBound
+ * @function isOutRange
  * @description Test path is out of bound of base
  * @param {string} path
  * @param {string} root
  * @returns {boolean}
  */
-export function isOutBound(path: string, root: string): boolean {
+export function isOutRange(path: string, root: string): boolean {
   path = relative(root, path);
 
   if (/\.\.(?:[\\/]|$)/.test(path)) return true;
@@ -133,19 +106,6 @@ export function boundaryGenerator(): string {
 
   // Return boundary
   return boundary;
-}
-
-/**
- * @function parseHttpDate
- * @description Parse an HTTP Date into a number.
- * @param {string} date
- * @returns {number}
- * @private
- */
-export function parseHttpDate(date: string): number {
-  const timestamp = date && Date.parse(date);
-
-  return typeOf(timestamp, 'number') ? timestamp : NaN;
 }
 
 /**
