@@ -8,13 +8,13 @@
 // import etag from 'etag';
 import { Stats } from 'fs';
 import { join } from 'path';
-import { unixify, parseTokens } from './utils';
-import { Context, Next, Middleware } from 'koa';
-import parseRange, { Ranges } from 'range-parser';
+import { Context, Middleware, Next } from 'koa';
+import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
+import { boundaryGenerator, fstat, isOutRange, parseTokens, unixify } from './utils';
 
-type DirCallback = (path: string) => string;
-type ErrorCallback = (error: Error) => string;
+type DirCallback = (ctx: Context, path: string) => void;
 type Ignore = false | ((path: string) => false | 'deny' | 'ignore');
+type ErrorCallback = (ctx: Context, status: number, message: string) => void;
 
 export interface Options {
   acceptRanges?: boolean;
@@ -32,9 +32,11 @@ export interface Options {
 interface Range {
   start: number;
   end: number;
-  prefix: string;
+  prefix?: string;
   suffix?: string;
 }
+
+type Ranges = -1 | -2 | Range[];
 
 class Send {
   private ctx: Context;
@@ -47,6 +49,8 @@ class Send {
     this.root = root;
     this.options = options;
     this.path = unixify(join(root, ctx.path));
+
+    this.run();
   }
 
   private hasTrailingSlash(): boolean {
@@ -119,35 +123,194 @@ class Send {
     return Date.parse(lastModified) <= Date.parse(ifRange);
   }
 
-  private statError(error: NodeJS.ErrnoException): void {
-    this.ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
+  private error(status: number): void {
+    const { ctx, options }: Send = this;
+
+    if (typeof options.onerror === 'function') {
+      options.onerror(ctx, status, ctx.message);
+    } else {
+      ctx.throw(status);
+    }
   }
 
-  private parseRange(stats: Stats): Range[] {
-    const { options, ctx }: Send = this;
-    const { request, response }: Context = ctx;
+  private statError(error: NodeJS.ErrnoException): void {
+    this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
+  }
+
+  private dir(): void {
+    const { ctx, path, options }: Send = this;
+
+    if (typeof options.ondir === 'function') {
+      options.ondir(ctx, path);
+    } else {
+      this.error(403);
+    }
+  }
+
+  private parseRange(stats: Stats): Ranges {
+    const { ctx }: Send = this;
+    const { request }: Context = ctx;
 
     const result: Range[] = [];
     const { size }: Stats = stats;
 
+    // Content-Length
     let contentLength: number = size;
 
     // Range support
     if (this.options.acceptRanges !== false) {
-      let range: string = request.get('Range');
+      const range: string = request.get('Range');
 
       // Range fresh
       if (range && this.isRangeFresh()) {
         // Parse range -1 -2 or []
-        const ranges: -1 | -2 | Ranges = parseRange(size, range, { combine: true });
+        const ranges: -1 | -2 | PRanges = parseRange(size, range, { combine: true });
 
         // Valid ranges, support multiple ranges
         if (Array.isArray(ranges) && ranges.type === 'bytes') {
+          ctx.status = 206;
+
+          // Multiple ranges
+          if (ranges.length > 1) {
+            // Reset content-length
+            contentLength = 0;
+
+            // Range boundary
+            const boundary = `<${boundaryGenerator()}>`;
+            const suffix: string = `\r\n--${boundary}--\r\n`;
+
+            ctx.type = `multipart/byteranges; boundary=${boundary}`;
+
+            // Map ranges
+            ranges.forEach(({ start, end }: PRange): void => {
+              // Set fields
+              const contentType: string = 'Content-Type: application/octet-stream';
+              const contentRange: string = `Content-Range: bytes ${start}-${end}/${size}`;
+              const prefix: string = `\r\n--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+
+              // Compute content-length
+              contentLength += end - start + Buffer.byteLength(prefix) + 1;
+
+              // Cache range
+              result.push({ start, end, prefix });
+            });
+
+            // The first prefix boundary remove \r\n
+            result[0].prefix = result[0].prefix.replace(/^\r\n/, '');
+            // The last add suffix boundary
+            result[result.length - 1].suffix = suffix;
+            // Compute content-length
+            contentLength += Buffer.byteLength(suffix);
+          } else {
+            const { start, end }: PRange = ranges[0];
+
+            ctx.set('Content-Range', `bytes ${start}-${end}/${size}`);
+
+            // Compute content-length
+            contentLength = end - start + 1;
+
+            // Cache range
+            result.push({ start, end });
+          }
+        } else {
+          return ranges;
         }
       }
     }
 
-    return result;
+    ctx.length = contentLength;
+
+    return result.length ? result : [{ start: 0, end: size }];
+  }
+
+  private async run(): Promise<any> {
+    const { ctx, root, path, options }: Send = this;
+    const { method, response }: Context = ctx;
+    const { ignore }: Options = options;
+
+    // Only support GET and HEAD
+    if (method !== 'GET' && method !== 'HEAD') {
+      return this.error(405);
+    }
+
+    if (path.includes('\0') || isOutRange(path, root)) {
+      // Malicious path or null byte(s)
+      return this.error(403);
+    }
+
+    // Is ignore path or file
+    switch (typeof ignore === 'function' ? ignore(this.path) : ignore) {
+      case 'deny':
+        return this.error(403);
+      case 'ignore':
+        return this.error(404);
+    }
+
+    ctx.status = 200;
+
+    try {
+      const stats: Stats = await fstat(path);
+
+      // Is directory
+      if (stats.isDirectory()) {
+        // return this.sendIndex();
+      } else if (this.hasTrailingSlash()) {
+        // Not a directory but has trailing slash
+        return this.error(404);
+      }
+
+      // Conditional get support
+      if (this.isConditionalGET()) {
+        const responseEnd: () => void = () => {
+          // Remove content-type
+          response.remove('Content-Type');
+
+          // End with empty content
+          ctx.body = null;
+        };
+
+        if (this.isPreconditionFailure()) {
+          ctx.status = 412;
+
+          return responseEnd();
+        } else if (this.isCachable() && ctx.fresh) {
+          ctx.status = 304;
+
+          return responseEnd();
+        }
+
+        // Head request
+        if (method === 'HEAD') {
+          // Set content-length
+          ctx.length = stats.size;
+
+          // End with empty content
+          return (ctx.body = null);
+        }
+
+        // Parse ranges
+        const ranges: Ranges = this.parseRange(stats);
+
+        // 416
+        if (ranges === -1) {
+          // Set content-range
+          ctx.set('Content-Range', `bytes */${stats.size}`);
+
+          // Unsatisfiable 416
+          return this.error(416);
+        }
+
+        // 400
+        if (ranges === -2) {
+          return this.error(400);
+        }
+
+        // Read file
+        // this.sendFile(ranges);
+      }
+    } catch (error) {
+      return this.statError(error);
+    }
   }
 }
 

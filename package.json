@@ -29,8 +29,6 @@
   "homepage": "https://github.com/nuintun/koa-files#readme",
   "dependencies": {
     "destroy": "^1.0.4",
-    "encodeurl": "^1.0.2",
-    "escape-html": "^1.0.3",
     "etag": "^1.8.1",
     "ms": "^2.1.2",
     "range-parser": "^1.2.1",
@@ -38,8 +36,6 @@
   },
   "devDependencies": {
     "@types/destroy": "^1.0.0",
-    "@types/encodeurl": "^1.0.0",
-    "@types/escape-html": "^0.0.20",
     "@types/etag": "^1.8.0",
     "@types/koa": "^2.11.0",
     "@types/ms": "^0.7.31",
@@ -48,7 +44,7 @@
     "koa": "^2.11.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-typescript2": "^0.25.3",
-    "rollup": "^1.27.9",
+    "rollup": "^1.27.10",
     "typescript": "^3.7.3"
   }
 }

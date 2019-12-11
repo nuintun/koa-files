@@ -62,16 +62,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/encodeurl@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@types/encodeurl/-/encodeurl-1.0.0.tgz#b811667d62e53d01adc4bbbfc3b5a1ad99b4738a"
-  integrity sha512-iO2Q6xQOJ5DtOB6wJ2KIetFq9JRTbpzcKTe2aS6CCsa+W9KNWX2yXx9KeB5sY/nBfAWN43LkPg6SFB+ldsW9ZA==
-
-"@types/escape-html@^0.0.20":
-  version "0.0.20"
-  resolved "https://registry.yarnpkg.com/@types/escape-html/-/escape-html-0.0.20.tgz#cae698714dd61ebee5ab3f2aeb9a34ba1011735a"
-  integrity sha512-6dhZJLbA7aOwkYB2GDGdIqJ20wmHnkDzaxV9PJXe7O02I2dSFTERzRB6JrX6cWKaS+VqhhY7cQUMCbO5kloFUw==
-
 "@types/estree@*":
   version "0.0.40"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.40.tgz#0e6cb9b9bbd098031fa19e4b4e8131bc70e5de13"
@@ -828,10 +818,10 @@ rollup-pluginutils@^2.8.1:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@^1.27.9:
-  version "1.27.9"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.27.9.tgz#742f1234c1fa935f35149a433807da675b10f9a6"
-  integrity sha512-8AfW4cJTPZfG6EXWwT/ujL4owUsDI1Xl8J1t+hvK4wDX81F5I4IbwP9gvGbHzxnV19fnU4rRABZQwZSX9J402Q==
+rollup@^1.27.10:
+  version "1.27.10"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.27.10.tgz#e0814c1401e7658b679d617d3511f0a4ffaea019"
+  integrity sha512-5PjBSKney8zLu7tTn/y4iVBL3OyK+G9rA/wfkcY78bZ9kAMtgNqb8nOfR5KpoDYyt8Vs5o2o8DyDjf9RpwYbAg==
   dependencies:
     "@types/estree" "*"
     "@types/node" "*"
