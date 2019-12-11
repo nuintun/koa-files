@@ -4,6 +4,7 @@
  * @author nuintun
  */
 
+import fs, { Stats } from 'fs';
 import { relative } from 'path';
 
 const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
@@ -203,4 +204,20 @@ export function createErrorDocument(statusCode: number, statusMessage: string): 
     '  </body>\n' +
     '</html>\n'
   );
+}
+
+/**
+ * @function fstat
+ * @param {string} path
+ * @returns {Promise<Stats>}
+ */
+export function fstat(path: string): Promise<Stats> {
+  type Resolve = (value: Stats) => void;
+  type Reject = (reason: NodeJS.ErrnoException) => void;
+
+  return new Promise((resolve: Resolve, reject: Reject): void => {
+    fs.stat(path, (error: NodeJS.ErrnoException, stats: Stats): void => {
+      error ? reject(error) : resolve(stats);
+    });
+  });
 }
