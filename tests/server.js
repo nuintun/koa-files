@@ -9,7 +9,7 @@ const server = require('../index');
 
 const app = new Koa();
 
-app.use(server());
+app.use(server('tests'));
 
 app.on('error', error => error);
 
