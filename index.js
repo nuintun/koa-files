@@ -153,13 +153,8 @@ function hasTrailingSlash(path) {
     return /\/$/.test(path);
 }
 
-/**
- * @module index
- * @license MIT
- * @author nuintun
- */
 const defaultOptions = {
-    maxAge: '1year'
+    maxAge: '1y'
 };
 class Send {
     /**
@@ -497,6 +492,12 @@ class Send {
         }
     }
 }
+
+/**
+ * @module index
+ * @license MIT
+ * @author nuintun
+ */
 /**
  * @function server
  * @param {string} root
