@@ -4,13 +4,16 @@
  * @author nuintun
  */
 
-// import ms from 'ms';
-// import etag from 'etag';
-import { Stats } from 'fs';
-import { join } from 'path';
+import ms from 'ms';
+import etag from 'etag';
+import destroy from 'destroy';
+import through from './through';
+import { Transform } from 'stream';
+import fs, { ReadStream, Stats } from 'fs';
+import { extname, join, resolve } from 'path';
 import { Context, Middleware, Next } from 'koa';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
-import { boundaryGenerator, fstat, isOutRange, parseTokens, unixify } from './utils';
+import { boundaryGenerator, fstat, hasTrailingSlash, isOutRange, parseTokens, unixify } from './utils';
 
 type DirCallback = (ctx: Context, path: string) => void;
 type Ignore = false | ((path: string) => false | 'deny' | 'ignore');
@@ -22,9 +25,8 @@ export interface Options {
   etag?: boolean;
   ignore?: Ignore;
   immutable?: boolean;
-  index?: string | string[] | false;
   lastModified?: boolean;
-  maxAge?: string | number;
+  maxAge?: string;
   ondir?: DirCallback;
   onerror?: ErrorCallback;
 }
@@ -36,27 +38,43 @@ interface Range {
   suffix?: string;
 }
 
-type Ranges = -1 | -2 | Range[];
+type Ranges = Range[] | -1 | -2;
+
+const defaultOptions: Options = {
+  maxAge: '1year'
+};
 
 class Send {
   private ctx: Context;
   private root: string;
-  private path: string;
   private options: Options;
+  private path: string | -1;
+  private buffer: Transform;
 
-  constructor(ctx: Context, root: string, options: Options) {
+  /**
+   * @constructor
+   * @param {Context} ctx
+   * @param {string} root
+   * @param {Options} options
+   */
+  constructor(ctx: Context, root: string = '.', options: Options) {
     this.ctx = ctx;
-    this.root = root;
-    this.options = options;
-    this.path = unixify(join(root, ctx.path));
+    this.root = unixify(resolve(root));
+    this.options = { ...defaultOptions, ...options };
 
-    this.run();
+    // Decode path
+    const path: string | -1 = decodeURI(ctx.path);
+
+    // Get real path
+    this.path = (path as string | -1) === -1 ? -1 : unixify(join(this.root, path));
+    // Buffer
+    this.buffer = through();
   }
 
-  private hasTrailingSlash(): boolean {
-    return /\/$/.test(this.path);
-  }
-
+  /**
+   * @method isConditionalGET
+   * @returns {boolean}
+   */
   private isConditionalGET(): boolean {
     const { request }: Context = this.ctx;
 
@@ -68,6 +86,10 @@ class Send {
     );
   }
 
+  /**
+   * @method isPreconditionFailure
+   * @returns {boolean}
+   */
   private isPreconditionFailure(): boolean {
     const { request, response }: Context = this.ctx;
 
@@ -98,12 +120,20 @@ class Send {
     return false;
   }
 
+  /**
+   * @method isCachable
+   * @returns {boolean}
+   */
   private isCachable(): boolean {
     const { status }: Context = this.ctx;
 
     return status === 304 || (status >= 200 && status < 300);
   }
 
+  /**
+   * @method isRangeFresh
+   * @returns {boolean}
+   */
   private isRangeFresh(): boolean {
     const { request, response }: Context = this.ctx;
     const ifRange = request.get('If-Range');
@@ -123,6 +153,10 @@ class Send {
     return Date.parse(lastModified) <= Date.parse(ifRange);
   }
 
+  /**
+   * @method error
+   * @param {number} status
+   */
   private error(status: number): void {
     const { ctx, options }: Send = this;
 
@@ -133,12 +167,20 @@ class Send {
     }
   }
 
+  /**
+   * @method statError
+   * @param {ErrnoException} error
+   */
   private statError(error: NodeJS.ErrnoException): void {
     this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
   }
 
-  private dir(): void {
-    const { ctx, path, options }: Send = this;
+  /**
+   * @method dir
+   * @param {string} path
+   */
+  private dir(path: string): void {
+    const { ctx, options }: Send = this;
 
     if (typeof options.ondir === 'function') {
       options.ondir(ctx, path);
@@ -147,6 +189,11 @@ class Send {
     }
   }
 
+  /**
+   * @method parseRange
+   * @param {Stats} stats
+   * @returns {Ranges}
+   */
   private parseRange(stats: Stats): Ranges {
     const { ctx }: Send = this;
     const { request }: Context = ctx;
@@ -178,13 +225,12 @@ class Send {
             // Range boundary
             const boundary = `<${boundaryGenerator()}>`;
             const suffix: string = `\r\n--${boundary}--\r\n`;
+            const contentType: string = `Content-Type: ${ctx.type}`;
 
             ctx.type = `multipart/byteranges; boundary=${boundary}`;
 
             // Map ranges
             ranges.forEach(({ start, end }: PRange): void => {
-              // Set fields
-              const contentType: string = 'Content-Type: application/octet-stream';
               const contentRange: string = `Content-Range: bytes ${start}-${end}/${size}`;
               const prefix: string = `\r\n--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
 
@@ -223,8 +269,93 @@ class Send {
     return result.length ? result : [{ start: 0, end: size }];
   }
 
-  private async run(): Promise<any> {
-    const { ctx, root, path, options }: Send = this;
+  /**
+   * @method setupHeaders
+   * @param {string} path
+   * @param {Stats} stats
+   */
+  private setupHeaders(path: string, stats: Stats): void {
+    const { ctx, options }: Send = this;
+
+    // Accept-Ranges
+    if (options.acceptRanges !== false) {
+      // Set Accept-Ranges
+      ctx.set('Accept-Ranges', 'bytes');
+    }
+
+    // Set Content-Type
+    ctx.type = extname(path);
+
+    // Cache-Control
+    if (options.cacheControl !== false) {
+      let cacheControl = `public, max-age=${ms(options.maxAge) / 1000}`;
+
+      if (options.immutable) {
+        cacheControl += ', immutable';
+      }
+
+      // Set Cache-Control
+      ctx.set('Cache-Control', cacheControl);
+    }
+
+    // Last-Modified
+    if (options.lastModified !== false) {
+      // Get mtime utc string
+      ctx.set('Last-Modified', stats.mtime.toUTCString());
+    }
+
+    // ETag
+    if (options.etag !== false) {
+      // Set ETag
+      ctx.set('ETag', etag(stats));
+    }
+  }
+
+  /**
+   * @method read
+   * @param {string} path
+   * @param {Range} range
+   * @returns {Promise<true>}
+   */
+  private read(path: string, range: Range): Promise<true> {
+    const { buffer }: Send = this;
+
+    return new Promise((resolve, reject) => {
+      // Write prefix boundary
+      range.prefix && buffer.write(range.prefix);
+
+      // Create file stream
+      const file: ReadStream = fs.createReadStream(path, range);
+
+      // Write data to buffer
+      file.on('data', (chunk: any) => {
+        buffer.write(chunk);
+      });
+
+      // Error handling code-smell
+      file.on('error', error => {
+        // Reject
+        reject(error);
+      });
+
+      // File stream close
+      file.on('close', () => {
+        // Push suffix boundary
+        range.suffix && buffer.write(range.suffix);
+        // Destroy file stream
+        destroy(file);
+        // Resolve
+        resolve(true);
+      });
+    });
+  }
+
+  /**
+   * @method start
+   * @returns {Promise<any>}
+   */
+  public async start(): Promise<any> {
+    const { ctx, root, path, buffer, options }: Send = this;
     const { method, response }: Context = ctx;
     const { ignore }: Options = options;
 
@@ -233,31 +364,43 @@ class Send {
       return this.error(405);
     }
 
-    if (path.includes('\0') || isOutRange(path, root)) {
-      // Malicious path or null byte(s)
+    // Path -1 or null byte(s)
+    if (path === -1 || path.includes('\0')) {
+      return this.error(400);
+    }
+
+    // Malicious path
+    if (isOutRange(path, root)) {
       return this.error(403);
     }
 
     // Is ignore path or file
-    switch (typeof ignore === 'function' ? ignore(this.path) : ignore) {
+    switch (typeof ignore === 'function' ? ignore(path) : false) {
       case 'deny':
         return this.error(403);
       case 'ignore':
         return this.error(404);
     }
 
-    ctx.status = 200;
+    let stats: Stats;
 
     try {
-      const stats: Stats = await fstat(path);
+      stats = await fstat(path);
+    } catch (error) {
+      return this.statError(error);
+    }
 
+    if (stats) {
       // Is directory
       if (stats.isDirectory()) {
-        // return this.sendIndex();
-      } else if (this.hasTrailingSlash()) {
+        return this.dir(path);
+      } else if (hasTrailingSlash(path)) {
         // Not a directory but has trailing slash
         return this.error(404);
       }
+
+      // Setup headers
+      this.setupHeaders(path, stats);
 
       // Conditional get support
       if (this.isConditionalGET()) {
@@ -278,42 +421,59 @@ class Send {
 
           return responseEnd();
         }
-
-        // Head request
-        if (method === 'HEAD') {
-          // Set content-length
-          ctx.length = stats.size;
-
-          // End with empty content
-          return (ctx.body = null);
-        }
-
-        // Parse ranges
-        const ranges: Ranges = this.parseRange(stats);
-
-        // 416
-        if (ranges === -1) {
-          // Set content-range
-          ctx.set('Content-Range', `bytes */${stats.size}`);
-
-          // Unsatisfiable 416
-          return this.error(416);
-        }
-
-        // 400
-        if (ranges === -2) {
-          return this.error(400);
-        }
-
-        // Read file
-        // this.sendFile(ranges);
       }
-    } catch (error) {
-      return this.statError(error);
+
+      // Head request
+      if (method === 'HEAD') {
+        // Set content-length
+        ctx.length = stats.size;
+
+        // End with empty content
+        return (ctx.body = null);
+      }
+
+      // Parse ranges
+      const ranges: Ranges = this.parseRange(stats);
+
+      // 416
+      if (ranges === -1) {
+        // Set content-range
+        ctx.set('Content-Range', `bytes */${stats.size}`);
+
+        // Unsatisfiable 416
+        return this.error(416);
+      }
+
+      // 400
+      if (ranges === -2) {
+        return this.error(400);
+      }
+
+      // Set stream body
+      ctx.body = buffer;
+
+      // Read file ranges
+      for (const range of ranges) {
+        await this.read(path, range);
+      }
+
+      // End stream
+      buffer.end();
     }
   }
 }
 
+/**
+ * @function server
+ * @param {string} root
+ * @param {Options} options
+ */
 export default function server(root: string, options: Options): Middleware {
-  return async (ctx: Context, next: Next): Promise<Send> => new Send(ctx, root, options);
+  return async (ctx: Context, next: Next): Promise<any> => {
+    const { start }: Send = new Send(ctx, root, options);
+
+    await next();
+
+    await start();
+  };
 }

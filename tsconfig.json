@@ -2,8 +2,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "pretty": true,
-    "target": "ES6",
     "newLine": "LF",
+    "target": "ES2017",
     "module": "ESNext",
     "declaration": false,
     "alwaysStrict": true,

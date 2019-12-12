@@ -28,9 +28,9 @@ function noop(chunk: any, encoding: string, next: TransformCallback): void {
  * @returns {Transform}
  */
 export default function through(
-  options: TransformOptions | TransformFunction,
-  transform: TransformFunction | FlushFunction,
-  flush: FlushFunction
+  options?: TransformOptions | TransformFunction,
+  transform?: TransformFunction | FlushFunction,
+  flush?: FlushFunction
 ): Transform {
   if (typeof options === 'function') {
     transform = options as TransformFunction;
