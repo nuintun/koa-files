@@ -23,7 +23,7 @@ async function build(inputOptions, outputOptions) {
 
   await bundle.write(outputOptions);
 
-  console.log(`Build ${outputOptions.file} success!`);
+  console.log(`> build koa-files success!`);
 }
 
 const banner = `/**
