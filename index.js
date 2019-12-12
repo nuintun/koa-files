@@ -210,14 +210,6 @@ class Send {
         return false;
     }
     /**
-     * @method isCachable
-     * @returns {boolean}
-     */
-    isCachable() {
-        const { status } = this.ctx;
-        return status === 304 || (status >= 200 && status < 300);
-    }
-    /**
      * @method isRangeFresh
      * @returns {boolean}
      */
@@ -227,13 +219,22 @@ class Send {
         if (!ifRange)
             return true;
         // If-Range as etag
-        if (ifRange.indexOf('"') !== -1) {
+        if (ifRange.includes('"')) {
             const etag = response.get('ETag');
-            return !!(etag && ifRange.indexOf(etag) !== -1);
+            return !!(etag && ifRange.includes(etag));
         }
         // If-Range as modified date
         const lastModified = response.get('Last-Modified');
         return Date.parse(lastModified) <= Date.parse(ifRange);
+    }
+    /**
+     * @method isIgnore
+     * @param {string} path
+     * @returns {boolean}
+     */
+    isIgnore(path) {
+        const { ignore } = this.options;
+        return (typeof ignore === 'function' ? ignore(path) : false) === true;
     }
     /**
      * @method error
@@ -271,6 +272,7 @@ class Send {
                 const ranges = parseRange(size, range, { combine: true });
                 // Valid ranges, support multiple ranges
                 if (Array.isArray(ranges) && ranges.type === 'bytes') {
+                    // Set 206 status
                     ctx.status = 206;
                     // Multiple ranges
                     if (ranges.length > 1) {
@@ -321,6 +323,8 @@ class Send {
      */
     setupHeaders(path$1, stats) {
         const { ctx, options } = this;
+        // Set status
+        ctx.status = 200;
         // Accept-Ranges
         if (options.acceptRanges !== false) {
             // Set Accept-Ranges
@@ -366,7 +370,7 @@ class Send {
                 buffer.write(chunk);
             });
             // Error handling code-smell
-            file.on('error', error => {
+            file.on('error', (error) => {
                 // Reject
                 reject(error);
             });
@@ -386,9 +390,8 @@ class Send {
      * @returns {Promise<boolean>}
      */
     async start() {
-        const { ctx, root, path, buffer, options } = this;
+        const { ctx, root, path, buffer } = this;
         const { method, response } = ctx;
-        const { ignore } = options;
         // Only support GET and HEAD
         if (method !== 'GET' && method !== 'HEAD') {
             // 405
@@ -404,14 +407,13 @@ class Send {
             return false;
         }
         // Is ignore path or file
-        switch (typeof ignore === 'function' ? ignore(path) : false) {
-            // 403
-            case 'deny':
-            // 404
-            case 'ignore':
-                return false;
+        if (this.isIgnore(path)) {
+            // 403 | 404
+            return false;
         }
+        // File stats
         let stats;
+        // Get file stats
         try {
             stats = await fstat(path);
         }
@@ -445,7 +447,7 @@ class Send {
                     ctx.status = 412;
                     return responseEnd();
                 }
-                else if (this.isCachable() && ctx.fresh) {
+                else if (ctx.fresh) {
                     ctx.status = 304;
                     return responseEnd();
                 }

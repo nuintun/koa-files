@@ -9,7 +9,7 @@ import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
 import { boundaryGenerator, fstat, hasTrailingSlash, isOutRange, parseTokens, unixify } from './utils';
 
-export type Ignore = false | ((path: string) => false | 'deny' | 'ignore');
+export type Ignore = false | ((path: string) => boolean);
 
 export interface Options {
   acceptRanges?: boolean;
@@ -84,10 +84,10 @@ export default class Send {
     const { request, response }: Context = this.ctx;
 
     // If-Match
-    const match = request.get('If-Match');
+    const match: string = request.get('If-Match');
 
     if (match) {
-      const etag = response.get('ETag');
+      const etag: string = response.get('ETag');
 
       return (
         !etag ||
@@ -99,10 +99,10 @@ export default class Send {
     }
 
     // If-Unmodified-Since
-    const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
+    const unmodifiedSince: number = Date.parse(request.get('If-Unmodified-Since'));
 
     if (!isNaN(unmodifiedSince)) {
-      const lastModified = Date.parse(response.get('Last-Modified'));
+      const lastModified: number = Date.parse(response.get('Last-Modified'));
 
       return isNaN(lastModified) || lastModified > unmodifiedSince;
     }
@@ -111,36 +111,37 @@ export default class Send {
   }
 
   /**
-   * @method isCachable
-   * @returns {boolean}
-   */
-  private isCachable(): boolean {
-    const { status }: Context = this.ctx;
-
-    return status === 304 || (status >= 200 && status < 300);
-  }
-
-  /**
    * @method isRangeFresh
    * @returns {boolean}
    */
   private isRangeFresh(): boolean {
     const { request, response }: Context = this.ctx;
-    const ifRange = request.get('If-Range');
+    const ifRange: string = request.get('If-Range');
 
     if (!ifRange) return true;
 
     // If-Range as etag
-    if (ifRange.indexOf('"') !== -1) {
-      const etag = response.get('ETag');
+    if (ifRange.includes('"')) {
+      const etag: string = response.get('ETag');
 
-      return !!(etag && ifRange.indexOf(etag) !== -1);
+      return !!(etag && ifRange.includes(etag));
     }
 
     // If-Range as modified date
-    const lastModified = response.get('Last-Modified');
+    const lastModified: string = response.get('Last-Modified');
 
     return Date.parse(lastModified) <= Date.parse(ifRange);
+  }
+
+  /**
+   * @method isIgnore
+   * @param {string} path
+   * @returns {boolean}
+   */
+  private isIgnore(path: string): boolean {
+    const { ignore }: Options = this.options;
+
+    return (typeof ignore === 'function' ? ignore(path) : false) === true;
   }
 
   /**
@@ -187,6 +188,7 @@ export default class Send {
 
         // Valid ranges, support multiple ranges
         if (Array.isArray(ranges) && ranges.type === 'bytes') {
+          // Set 206 status
           ctx.status = 206;
 
           // Multiple ranges
@@ -249,6 +251,9 @@ export default class Send {
   private setupHeaders(path: string, stats: Stats): void {
     const { ctx, options }: Send = this;
 
+    // Set status
+    ctx.status = 200;
+
     // Accept-Ranges
     if (options.acceptRanges !== false) {
       // Set Accept-Ranges
@@ -305,7 +310,7 @@ export default class Send {
       });
 
       // Error handling code-smell
-      file.on('error', error => {
+      file.on('error', (error: NodeJS.ErrnoException) => {
         // Reject
         reject(error);
       });
@@ -327,9 +332,8 @@ export default class Send {
    * @returns {Promise<boolean>}
    */
   public async start(): Promise<boolean> {
-    const { ctx, root, path, buffer, options }: Send = this;
+    const { ctx, root, path, buffer }: Send = this;
     const { method, response }: Context = ctx;
-    const { ignore }: Options = options;
 
     // Only support GET and HEAD
     if (method !== 'GET' && method !== 'HEAD') {
@@ -349,16 +353,15 @@ export default class Send {
     }
 
     // Is ignore path or file
-    switch (typeof ignore === 'function' ? ignore(path) : false) {
-      // 403
-      case 'deny':
-      // 404
-      case 'ignore':
-        return false;
+    if (this.isIgnore(path)) {
+      // 403 | 404
+      return false;
     }
 
+    // File stats
     let stats: Stats;
 
+    // Get file stats
     try {
       stats = await fstat(path);
     } catch (error) {
@@ -396,7 +399,7 @@ export default class Send {
           ctx.status = 412;
 
           return responseEnd();
-        } else if (this.isCachable() && ctx.fresh) {
+        } else if (ctx.fresh) {
           ctx.status = 304;
 
           return responseEnd();
