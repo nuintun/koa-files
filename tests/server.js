@@ -13,4 +13,4 @@ app.use(server('tests'));
 
 app.on('error', error => error);
 
-app.listen(80, () => console.log('> server running at: 127.0.0.1'));
+app.listen(process.env.PORT || 80, () => console.log('> server running at: 127.0.0.1'));
