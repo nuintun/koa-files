@@ -18,49 +18,6 @@ const path = require('path');
 const parseRange = require('range-parser');
 
 /**
- * @module through
- * @license MIT
- * @author nuintun
- */
-/**
- * @function noop
- * @description A noop _transform function
- * @param {any} chunk
- * @param {string} encoding
- * @param {Function} next
- */
-function noop(chunk, encoding, next) {
-    next(null, chunk);
-}
-/**
- * @function through
- * @param {TransformOptions | TransformFunction} options
- * @param {ransformFunction | FlushFunction} transform
- * @param {FlushFunction} flush
- * @returns {Transform}
- */
-function through(options, transform, flush) {
-    if (typeof options === 'function') {
-        transform = options;
-        flush = transform;
-        options = {};
-    }
-    else if (typeof transform !== 'function') {
-        transform = noop;
-    }
-    options = options || {};
-    if (options.objectMode == null)
-        options.objectMode = true;
-    if (options.highWaterMark == null)
-        options.highWaterMark = 16;
-    const stream$1 = new stream.Transform(options);
-    stream$1._transform = transform;
-    if (typeof flush === 'function')
-        stream$1._flush = flush;
-    return stream$1;
-}
-
-/**
  * @module utils
  * @license MIT
  * @author nuintun
@@ -172,7 +129,7 @@ class Send {
         // Get real path
         this.path = path$1 === -1 ? -1 : unixify(path.join(this.root, path$1));
         // Buffer
-        this.buffer = through();
+        this.buffer = new stream.PassThrough();
     }
     /**
      * @method isConditionalGET
@@ -365,19 +322,25 @@ class Send {
             range.prefix && buffer.write(range.prefix);
             // Create file stream
             const file = fs.createReadStream(path, range);
+            // Drain handle
+            const ondrain = () => file.resume();
+            // Bind drain handle
+            buffer.on('drain', ondrain);
             // Write data to buffer
-            file.on('data', (chunk) => {
-                buffer.write(chunk);
+            file.on('readable', () => {
+                // Read data
+                const chunk = file.read();
+                // Write data
+                chunk !== null && !buffer.write(chunk) && file.pause();
             });
             // Error handling code-smell
-            file.on('error', (error) => {
-                // Reject
-                reject(error);
-            });
-            // File stream close
+            file.on('error', (error) => reject(error));
+            // File read stream close
             file.on('close', () => {
                 // Push suffix boundary
                 range.suffix && buffer.write(range.suffix);
+                // Remove drain handle
+                buffer.removeListener('drain', ondrain);
                 // Destroy file stream
                 destroy(file);
                 // Resolve
@@ -421,6 +384,7 @@ class Send {
             // 404 | 500
             return false;
         }
+        // File exist
         if (stats) {
             // Is directory
             if (stats.isDirectory()) {

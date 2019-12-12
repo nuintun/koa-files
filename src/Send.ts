@@ -2,8 +2,7 @@ import ms from 'ms';
 import etag from 'etag';
 import { Context } from 'koa';
 import destroy from 'destroy';
-import through from './through';
-import { Transform } from 'stream';
+import { PassThrough } from 'stream';
 import fs, { ReadStream, Stats } from 'fs';
 import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
@@ -39,7 +38,7 @@ export default class Send {
   private root: string;
   private options: Options;
   private path: string | -1;
-  private buffer: Transform;
+  private buffer: PassThrough;
 
   /**
    * @constructor
@@ -58,7 +57,7 @@ export default class Send {
     // Get real path
     this.path = (path as string | -1) === -1 ? -1 : unixify(join(this.root, path));
     // Buffer
-    this.buffer = through();
+    this.buffer = new PassThrough();
   }
 
   /**
@@ -303,22 +302,30 @@ export default class Send {
 
       // Create file stream
       const file: ReadStream = fs.createReadStream(path, range);
+      // Drain handle
+      const ondrain: () => ReadStream = (): ReadStream => file.resume();
+
+      // Bind drain handle
+      buffer.on('drain', ondrain);
 
       // Write data to buffer
-      file.on('data', (chunk: any) => {
-        buffer.write(chunk);
+      file.on('readable', (): void => {
+        // Read data
+        const chunk: any = file.read();
+
+        // Write data
+        chunk !== null && !buffer.write(chunk) && file.pause();
       });
 
       // Error handling code-smell
-      file.on('error', (error: NodeJS.ErrnoException) => {
-        // Reject
-        reject(error);
-      });
+      file.on('error', (error: NodeJS.ErrnoException): void => reject(error));
 
-      // File stream close
-      file.on('close', () => {
+      // File read stream close
+      file.on('close', (): void => {
         // Push suffix boundary
         range.suffix && buffer.write(range.suffix);
+        // Remove drain handle
+        buffer.removeListener('drain', ondrain);
         // Destroy file stream
         destroy(file);
         // Resolve
@@ -369,6 +376,7 @@ export default class Send {
       return false;
     }
 
+    // File exist
     if (stats) {
       // Is directory
       if (stats.isDirectory()) {
