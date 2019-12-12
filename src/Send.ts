@@ -9,9 +9,7 @@ import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
 import { boundaryGenerator, fstat, hasTrailingSlash, isOutRange, parseTokens, unixify } from './utils';
 
-export type DirCallback = (ctx: Context, path: string) => void;
 export type Ignore = false | ((path: string) => false | 'deny' | 'ignore');
-export type ErrorCallback = (ctx: Context, status: number, message: string) => void;
 
 export interface Options {
   acceptRanges?: boolean;
@@ -21,8 +19,6 @@ export interface Options {
   immutable?: boolean;
   lastModified?: boolean;
   maxAge?: string;
-  ondir?: DirCallback;
-  onerror?: ErrorCallback;
 }
 
 interface Range {
@@ -151,36 +147,18 @@ export default class Send {
    * @method error
    * @param {number} status
    */
-  private error(status: number): void {
-    const { ctx, options }: Send = this;
+  private error(status: number): never {
+    const { ctx }: Send = this;
 
-    if (typeof options.onerror === 'function') {
-      options.onerror(ctx, status, ctx.message);
-    } else {
-      ctx.throw(status);
-    }
+    return ctx.throw(status);
   }
 
   /**
    * @method statError
    * @param {ErrnoException} error
    */
-  private statError(error: NodeJS.ErrnoException): void {
-    this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
-  }
-
-  /**
-   * @method dir
-   * @param {string} path
-   */
-  private dir(path: string): void {
-    const { ctx, options }: Send = this;
-
-    if (typeof options.ondir === 'function') {
-      options.ondir(ctx, path);
-    } else {
-      this.error(403);
-    }
+  private statError(error: NodeJS.ErrnoException): never {
+    return this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
   }
 
   /**
@@ -346,16 +324,17 @@ export default class Send {
 
   /**
    * @method start
-   * @returns {Promise<any>}
+   * @returns {Promise<boolean>}
    */
-  public async start(): Promise<any> {
+  public async start(): Promise<boolean> {
     const { ctx, root, path, buffer, options }: Send = this;
     const { method, response }: Context = ctx;
     const { ignore }: Options = options;
 
     // Only support GET and HEAD
     if (method !== 'GET' && method !== 'HEAD') {
-      return this.error(405);
+      // 405
+      return false;
     }
 
     // Path -1 or null byte(s)
@@ -365,15 +344,17 @@ export default class Send {
 
     // Malicious path
     if (isOutRange(path, root)) {
-      return this.error(403);
+      // 403
+      return false;
     }
 
     // Is ignore path or file
     switch (typeof ignore === 'function' ? ignore(path) : false) {
+      // 403
       case 'deny':
-        return this.error(403);
+      // 404
       case 'ignore':
-        return this.error(404);
+        return false;
     }
 
     let stats: Stats;
@@ -381,16 +362,19 @@ export default class Send {
     try {
       stats = await fstat(path);
     } catch (error) {
-      return this.statError(error);
+      // 404 | 500
+      return false;
     }
 
     if (stats) {
       // Is directory
       if (stats.isDirectory()) {
-        return this.dir(path);
+        // 403
+        return false;
       } else if (hasTrailingSlash(path)) {
+        // 404
         // Not a directory but has trailing slash
-        return this.error(404);
+        return false;
       }
 
       // Setup headers
@@ -398,12 +382,14 @@ export default class Send {
 
       // Conditional get support
       if (this.isConditionalGET()) {
-        const responseEnd: () => void = () => {
+        const responseEnd: () => true = () => {
           // Remove content-type
           response.remove('Content-Type');
 
           // End with empty content
           ctx.body = null;
+
+          return true;
         };
 
         if (this.isPreconditionFailure()) {
@@ -421,9 +407,10 @@ export default class Send {
       if (method === 'HEAD') {
         // Set content-length
         ctx.length = stats.size;
-
         // End with empty content
-        return (ctx.body = null);
+        ctx.body = null;
+
+        return true;
       }
 
       // Parse ranges
@@ -447,12 +434,20 @@ export default class Send {
       ctx.body = buffer;
 
       // Read file ranges
-      for (const range of ranges) {
-        await this.read(path, range);
+      try {
+        for (const range of ranges) {
+          await this.read(path, range);
+        }
+      } catch (error) {
+        return this.statError(error);
       }
 
       // End stream
       buffer.end();
+
+      return true;
     }
+
+    return false;
   }
 }

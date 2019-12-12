@@ -240,33 +240,15 @@ class Send {
      * @param {number} status
      */
     error(status) {
-        const { ctx, options } = this;
-        if (typeof options.onerror === 'function') {
-            options.onerror(ctx, status, ctx.message);
-        }
-        else {
-            ctx.throw(status);
-        }
+        const { ctx } = this;
+        return ctx.throw(status);
     }
     /**
      * @method statError
      * @param {ErrnoException} error
      */
     statError(error) {
-        this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
-    }
-    /**
-     * @method dir
-     * @param {string} path
-     */
-    dir(path) {
-        const { ctx, options } = this;
-        if (typeof options.ondir === 'function') {
-            options.ondir(ctx, path);
-        }
-        else {
-            this.error(403);
-        }
+        return this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
     }
     /**
      * @method parseRange
@@ -401,7 +383,7 @@ class Send {
     }
     /**
      * @method start
-     * @returns {Promise<any>}
+     * @returns {Promise<boolean>}
      */
     async start() {
         const { ctx, root, path, buffer, options } = this;
@@ -409,7 +391,8 @@ class Send {
         const { ignore } = options;
         // Only support GET and HEAD
         if (method !== 'GET' && method !== 'HEAD') {
-            return this.error(405);
+            // 405
+            return false;
         }
         // Path -1 or null byte(s)
         if (path === -1 || path.includes('\0')) {
@@ -417,30 +400,35 @@ class Send {
         }
         // Malicious path
         if (isOutRange(path, root)) {
-            return this.error(403);
+            // 403
+            return false;
         }
         // Is ignore path or file
         switch (typeof ignore === 'function' ? ignore(path) : false) {
+            // 403
             case 'deny':
-                return this.error(403);
+            // 404
             case 'ignore':
-                return this.error(404);
+                return false;
         }
         let stats;
         try {
             stats = await fstat(path);
         }
         catch (error) {
-            return this.statError(error);
+            // 404 | 500
+            return false;
         }
         if (stats) {
             // Is directory
             if (stats.isDirectory()) {
-                return this.dir(path);
+                // 403
+                return false;
             }
             else if (hasTrailingSlash(path)) {
+                // 404
                 // Not a directory but has trailing slash
-                return this.error(404);
+                return false;
             }
             // Setup headers
             this.setupHeaders(path, stats);
@@ -451,6 +439,7 @@ class Send {
                     response.remove('Content-Type');
                     // End with empty content
                     ctx.body = null;
+                    return true;
                 };
                 if (this.isPreconditionFailure()) {
                     ctx.status = 412;
@@ -466,7 +455,8 @@ class Send {
                 // Set content-length
                 ctx.length = stats.size;
                 // End with empty content
-                return (ctx.body = null);
+                ctx.body = null;
+                return true;
             }
             // Parse ranges
             const ranges = this.parseRange(stats);
@@ -484,12 +474,19 @@ class Send {
             // Set stream body
             ctx.body = buffer;
             // Read file ranges
-            for (const range of ranges) {
-                await this.read(path, range);
+            try {
+                for (const range of ranges) {
+                    await this.read(path, range);
+                }
+            }
+            catch (error) {
+                return this.statError(error);
             }
             // End stream
             buffer.end();
+            return true;
         }
+        return false;
     }
 }
 
@@ -503,11 +500,16 @@ class Send {
  * @param {string} root
  * @param {Options} options
  */
-function server(root, options) {
+function server(root, options = {}) {
+    if (options.defer) {
+        return async (ctx, next) => {
+            await next();
+            await new Send(ctx, root, options).start();
+        };
+    }
     return async (ctx, next) => {
-        const { start } = new Send(ctx, root, options);
-        await next();
-        await start();
+        const matched = await new Send(ctx, root, options).start();
+        !matched && (await next());
     };
 }
 

@@ -5,22 +5,31 @@
  */
 
 import { Context, Middleware, Next } from 'koa';
-import Send, { Options, Ignore, DirCallback, ErrorCallback } from './Send';
+import Send, { Ignore, Options as SendOptions } from './Send';
+
+interface Options extends SendOptions {
+  defer?: boolean;
+}
 
 /**
  * @function server
  * @param {string} root
  * @param {Options} options
  */
-export default function server(root: string, options: Options): Middleware {
-  return async (ctx: Context, next: Next): Promise<any> => {
-    const { start }: Send = new Send(ctx, root, options);
+export default function server(root: string, options: Options = {}): Middleware {
+  if (options.defer) {
+    return async (ctx: Context, next: Next): Promise<void> => {
+      await next();
+      await new Send(ctx, root, options).start();
+    };
+  }
 
-    await next();
+  return async (ctx: Context, next: Next): Promise<void> => {
+    const matched: boolean = await new Send(ctx, root, options).start();
 
-    await start();
+    !matched && (await next());
   };
 }
 
 // Export types
-export { Options, Ignore, DirCallback, ErrorCallback };
+export { Options, Ignore };
