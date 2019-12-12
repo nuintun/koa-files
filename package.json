@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A static files serving middleware for koa.",
   "main": "index.js",
+  "typings": "typings/index.d.ts",
   "scripts": {
     "build": "node rollup.js",
     "prepublishOnly": "node rollup.js"
