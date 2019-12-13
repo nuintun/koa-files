@@ -445,6 +445,9 @@ export default class Send {
         // End stream
         buffer.end();
 
+        // Header already sent
+        if (ctx.headerSent) return true;
+
         // 404 | 500
         return ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
       }
