@@ -19,7 +19,8 @@
     "static",
     "service",
     "send",
-    "serve"
+    "serve",
+    "middleware"
   ],
   "engines": {
     "node": ">=8.0.0"
