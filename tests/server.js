@@ -16,7 +16,7 @@ const port = process.env.PORT || 80;
  * @returns {boolean }
  */
 function socketError(error) {
-  return /ECONNABORTED|ECONNRESET|EPIPE|ETIMEDOUT|ENOPROTOOPT|ECANCELED/.test(error.code);
+  return /^(ECANCELED|ECONNRESET|ECONNABORTED)$/i.test(error.code);
 }
 
 // Static files server
