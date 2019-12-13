@@ -151,7 +151,6 @@ export default class Send {
   private parseRange(stats: Stats): Ranges {
     const { ctx }: Send = this;
     const { request }: Context = ctx;
-
     const result: Range[] = [];
     const { size }: Stats = stats;
 
@@ -219,6 +218,7 @@ export default class Send {
       }
     }
 
+    // Set Content-Length
     ctx.length = contentLength;
 
     return result.length ? result : [{ start: 0, end: size }];
@@ -286,9 +286,13 @@ export default class Send {
       const file: ReadStream = fs.createReadStream(path, range);
       // Drain handle
       const ondrain: () => ReadStream = (): ReadStream => file.resume();
+      // Close handle
+      const onclose: () => ReadStream = (): ReadStream => destroy(file);
 
       // Bind drain handle
       buffer.on('drain', ondrain);
+      // Bind close handle
+      buffer.on('close', onclose);
 
       // Write data to buffer
       file.on('readable', (): void => {
@@ -308,6 +312,8 @@ export default class Send {
         range.suffix && buffer.write(range.suffix);
         // Remove drain handle
         buffer.removeListener('drain', ondrain);
+        // Remove close handle
+        buffer.removeListener('close', onclose);
         // Destroy file stream
         destroy(file);
         // Resolve
@@ -432,6 +438,10 @@ export default class Send {
           await this.read(path, range);
         }
       } catch (error) {
+        // End stream
+        buffer.end();
+
+        // 404 | 500
         return ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
       }
 
