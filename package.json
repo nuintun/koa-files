@@ -49,9 +49,8 @@
     "@types/range-parser": "^1.2.3",
     "del": "^5.1.0",
     "koa": "^2.11.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-typescript2": "^0.25.3",
     "rollup": "^1.27.12",
+    "rollup-plugin-typescript2": "^0.25.3",
     "typescript": "^3.7.3"
   }
 }
