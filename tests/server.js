@@ -12,6 +12,6 @@ const port = process.env.PORT || 80;
 
 app.use(server('tests'));
 
-app.on('error', error => error.code !== 'ECONNRESET' && console.error(error));
+app.on('error', error => !/ECONNRESET|ECANCELED|ECONNABORTED/.test(error.code) && console.error(error));
 
 app.listen(port, () => console.log(`> server running at: 127.0.0.1:${port}`));
