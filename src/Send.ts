@@ -281,7 +281,12 @@ export default class Send {
       const file: ReadStream = fs.createReadStream(path, range);
 
       // Error handling code-smell
-      file.on('error', (error: NodeJS.ErrnoException): void => reject(error));
+      file.on('error', (error: NodeJS.ErrnoException): void => {
+        // Destroy file stream
+        destroy(file);
+        // Reject
+        reject(error);
+      });
 
       // File read stream close
       file.on('close', (): void => {
