@@ -5,7 +5,7 @@ import { PassThrough } from 'stream';
 import fs, { ReadStream, Stats } from 'fs';
 import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
-import { boundaryGenerator, fstat, hasTrailingSlash, isOutRange, parseTokens, unixify } from './utils';
+import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRange, unixify } from './utils';
 
 export type Ignore = false | ((path: string) => boolean);
 
@@ -54,7 +54,7 @@ export default class Send {
     const path: string | -1 = decodeURI(ctx.path);
 
     // Get real path
-    this.path = (path as string | -1) === -1 ? -1 : unixify(join(this.root, path));
+    this.path = path === -1 ? -1 : unixify(join(this.root, path));
     // Buffer
     this.buffer = new PassThrough();
   }
@@ -87,13 +87,7 @@ export default class Send {
     if (match) {
       const etag: string = response.get('ETag');
 
-      return (
-        !etag ||
-        (match !== '*' &&
-          parseTokens(match).every((match: string): boolean => {
-            return match !== etag && match !== 'W/' + etag && 'W/' + match !== etag;
-          }))
-      );
+      return !etag || (match !== '*' && !isETagFresh(match, etag));
     }
 
     // If-Unmodified-Since
@@ -119,10 +113,10 @@ export default class Send {
     if (!ifRange) return true;
 
     // If-Range as etag
-    if (ifRange.includes('"')) {
+    if (isETag(ifRange)) {
       const etag: string = response.get('ETag');
 
-      return !!(etag && ifRange.includes(etag));
+      return !!(etag && isETagFresh(ifRange, etag));
     }
 
     // If-Range as modified date

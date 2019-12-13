@@ -64,11 +64,36 @@ export function boundaryGenerator(): string {
 }
 
 /**
+ * @function fstat
+ * @param {string} path
+ * @returns {Promise<Stats>}
+ */
+export function fstat(path: string): Promise<Stats> {
+  type Resolve = (value: Stats) => void;
+  type Reject = (reason: NodeJS.ErrnoException) => void;
+
+  return new Promise((resolve: Resolve, reject: Reject): void => {
+    fs.stat(path, (error: NodeJS.ErrnoException, stats: Stats): void => {
+      error ? reject(error) : resolve(stats);
+    });
+  });
+}
+
+/**
+ * @function hasTrailingSlash
+ * @param {string} path
+ * @returns {boolean}
+ */
+export function hasTrailingSlash(path: string): boolean {
+  return /\/$/.test(path);
+}
+
+/**
  * @function parseTokens
  * @description Parse a HTTP tokens.
  * @param {string[]} value
  */
-export function parseTokens(value: string): string[] {
+function parseTokens(value: string): string[] {
   let start: number = 0;
   let end: number = 0;
   let tokens: string[] = [];
@@ -100,26 +125,22 @@ export function parseTokens(value: string): string[] {
 }
 
 /**
- * @function fstat
- * @param {string} path
- * @returns {Promise<Stats>}
+ * @function isETagFresh
+ * @param {string} match
+ * @param {string} etag
+ * @returns {boolean}
  */
-export function fstat(path: string): Promise<Stats> {
-  type Resolve = (value: Stats) => void;
-  type Reject = (reason: NodeJS.ErrnoException) => void;
-
-  return new Promise((resolve: Resolve, reject: Reject): void => {
-    fs.stat(path, (error: NodeJS.ErrnoException, stats: Stats): void => {
-      error ? reject(error) : resolve(stats);
-    });
+export function isETagFresh(match: string, etag: string): boolean {
+  return parseTokens(match).some((match: string): boolean => {
+    return match === etag || match === 'W/' + etag || 'W/' + match === etag;
   });
 }
 
 /**
- * @function hasTrailingSlash
- * @param {string} path
+ * @function isETag
+ * @param {string} etag
  * @returns {boolean}
  */
-export function hasTrailingSlash(path: string): boolean {
-  return /\/$/.test(path);
+export function isETag(etag: string): boolean {
+  return /(?:W\/)?"(?:[ !#-\x7E\x80-\xFF]*|\r\n[\t ]|\\.)*"/.test(etag);
 }

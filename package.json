@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A static files serving middleware for koa.",
   "main": "index.js",
   "typings": "typings/index.d.ts",
@@ -51,7 +51,7 @@
     "koa": "^2.11.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-typescript2": "^0.25.3",
-    "rollup": "^1.27.11",
+    "rollup": "^1.27.12",
     "typescript": "^3.7.3"
   }
 }
