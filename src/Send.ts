@@ -176,7 +176,7 @@ export default class Send {
             contentLength = 0;
 
             // Range boundary
-            const boundary = `<${boundaryGenerator()}>`;
+            const boundary: string = `<${boundaryGenerator()}>`;
             const suffix: string = `\r\n--${boundary}--\r\n`;
             const contentType: string = `Content-Type: ${ctx.type}`;
 
