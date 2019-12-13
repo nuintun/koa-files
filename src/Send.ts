@@ -269,33 +269,16 @@ export default class Send {
    * @param {string} path
    * @param {Range} range
    * @param {PassThrough} buffer
+   * @param {boolean} end
    * @returns {Promise<true>}
    */
-  private read(path: string, range: Range, buffer: PassThrough): Promise<true> {
+  private read(path: string, range: Range, buffer: PassThrough, end: boolean): Promise<true> {
     return new Promise((resolve, reject) => {
       // Write prefix boundary
       range.prefix && buffer.write(range.prefix);
 
       // Create file stream
       const file: ReadStream = fs.createReadStream(path, range);
-      // Drain handle
-      const ondrain: () => ReadStream = (): ReadStream => file.resume();
-      // Close handle
-      const onclose: () => ReadStream = (): ReadStream => destroy(file);
-
-      // Bind drain handle
-      buffer.on('drain', ondrain);
-      // Bind close handle
-      buffer.on('close', onclose);
-
-      // Write data to buffer
-      file.on('readable', (): void => {
-        // Read data
-        const chunk: any = file.read();
-
-        // Write data
-        chunk !== null && !buffer.write(chunk) && file.pause();
-      });
 
       // Error handling code-smell
       file.on('error', (error: NodeJS.ErrnoException): void => reject(error));
@@ -304,16 +287,46 @@ export default class Send {
       file.on('close', (): void => {
         // Push suffix boundary
         range.suffix && buffer.write(range.suffix);
-        // Remove drain handle
-        buffer.removeListener('drain', ondrain);
-        // Remove close handle
-        buffer.removeListener('close', onclose);
         // Destroy file stream
         destroy(file);
         // Resolve
         resolve(true);
       });
+
+      // Write data to buffer
+      file.pipe(buffer, { end });
     });
+  }
+
+  /**
+   * @method send
+   * @param {string} path
+   * @param {Range[]} ranges
+   */
+  private async send(path: string, ranges: Range[]): Promise<void> {
+    const { ctx }: Send = this;
+
+    // Set stream body, highWaterMark 64kb
+    ctx.body = new PassThrough({ highWaterMark: 65536 });
+
+    // Ranges count
+    let count: number = ranges.length;
+
+    // Read file ranges
+    try {
+      for (const range of ranges) {
+        await this.read(path, range, ctx.body, --count === 0);
+      }
+    } catch (error) {
+      // Header already sent
+      if (ctx.headerSent) {
+        // End stream
+        ctx.body.end();
+      } else {
+        // 404 | 500
+        ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
+      }
+    }
   }
 
   /**
@@ -423,29 +436,8 @@ export default class Send {
         return ctx.throw(400);
       }
 
-      // Set stream body, highWaterMark 64kb
-      ctx.body = new PassThrough({ highWaterMark: 65536 });
-
-      // Read file ranges
-      try {
-        for (const range of ranges) {
-          await this.read(path, range, ctx.body);
-        }
-      } catch (error) {
-        // Header already sent
-        if (ctx.headerSent) {
-          // End stream
-          ctx.body.end();
-
-          return true;
-        }
-
-        // 404 | 500
-        return ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
-      }
-
-      // End stream
-      ctx.body.end();
+      // Send file
+      this.send(path, ranges);
 
       return true;
     }
