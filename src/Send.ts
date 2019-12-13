@@ -1,4 +1,3 @@
-import ms from 'ms';
 import etag from 'etag';
 import { Context } from 'koa';
 import destroy from 'destroy';
@@ -17,7 +16,7 @@ export interface Options {
   ignore?: Ignore;
   immutable?: boolean;
   lastModified?: boolean;
-  maxAge?: string;
+  maxAge?: number;
 }
 
 interface Range {
@@ -30,7 +29,7 @@ interface Range {
 type Ranges = Range[] | -1 | -2;
 
 const defaultOptions: Options = {
-  maxAge: '1y'
+  maxAge: 31557600000
 };
 
 export default class Send {
@@ -246,8 +245,13 @@ export default class Send {
 
     // Cache-Control
     if (options.cacheControl !== false) {
-      let cacheControl = `public, max-age=${ms(options.maxAge) / 1000}`;
+      // Get maxAge
+      const maxAge: number = Math.floor((Math.abs(options.maxAge) || defaultOptions.maxAge) / 1000);
 
+      // Get Cache-Control
+      let cacheControl: string = `public, max-age=${maxAge}`;
+
+      // Immutable
       if (options.immutable) {
         cacheControl += ', immutable';
       }

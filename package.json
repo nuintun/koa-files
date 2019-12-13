@@ -39,14 +39,12 @@
   "dependencies": {
     "destroy": "^1.0.4",
     "etag": "^1.8.1",
-    "ms": "^2.1.2",
     "range-parser": "^1.2.1"
   },
   "devDependencies": {
     "@types/destroy": "^1.0.0",
     "@types/etag": "^1.8.0",
     "@types/koa": "^2.11.0",
-    "@types/ms": "^0.7.31",
     "@types/range-parser": "^1.2.3",
     "del": "^5.1.0",
     "koa": "^2.11.0",
