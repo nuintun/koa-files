@@ -37,7 +37,6 @@ export default class Send {
   private root: string;
   private options: Options;
   private path: string | -1;
-  private buffer: PassThrough;
 
   /**
    * @constructor
@@ -55,8 +54,6 @@ export default class Send {
 
     // Get real path
     this.path = path === -1 ? -1 : unixify(join(this.root, path));
-    // Buffer
-    this.buffer = new PassThrough();
   }
 
   /**
@@ -271,11 +268,10 @@ export default class Send {
    * @method read
    * @param {string} path
    * @param {Range} range
+   * @param {PassThrough} buffer
    * @returns {Promise<true>}
    */
-  private read(path: string, range: Range): Promise<true> {
-    const { buffer }: Send = this;
-
+  private read(path: string, range: Range, buffer: PassThrough): Promise<true> {
     return new Promise((resolve, reject) => {
       // Write prefix boundary
       range.prefix && buffer.write(range.prefix);
@@ -325,7 +321,7 @@ export default class Send {
    * @returns {Promise<boolean>}
    */
   public async start(): Promise<boolean | never> {
-    const { ctx, root, path, buffer }: Send = this;
+    const { ctx, root, path }: Send = this;
     const { method, response }: Context = ctx;
 
     // Only support GET and HEAD
@@ -427,27 +423,29 @@ export default class Send {
         return ctx.throw(400);
       }
 
-      // Set stream body
-      ctx.body = buffer;
+      // Set stream body, highWaterMark 64kb
+      ctx.body = new PassThrough({ highWaterMark: 65536 });
 
       // Read file ranges
       try {
         for (const range of ranges) {
-          await this.read(path, range);
+          await this.read(path, range, ctx.body);
         }
       } catch (error) {
-        // End stream
-        buffer.end();
-
         // Header already sent
-        if (ctx.headerSent) return true;
+        if (ctx.headerSent) {
+          // End stream
+          ctx.body.end();
+
+          return true;
+        }
 
         // 404 | 500
         return ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
       }
 
       // End stream
-      buffer.end();
+      ctx.body.end();
 
       return true;
     }
