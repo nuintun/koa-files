@@ -144,24 +144,6 @@ export default class Send {
   }
 
   /**
-   * @method error
-   * @param {number} status
-   */
-  private error(status: number): never {
-    const { ctx }: Send = this;
-
-    return ctx.throw(status);
-  }
-
-  /**
-   * @method statError
-   * @param {ErrnoException} error
-   */
-  private statError(error: NodeJS.ErrnoException): never {
-    return this.error(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
-  }
-
-  /**
    * @method parseRange
    * @param {Stats} stats
    * @returns {Ranges}
@@ -338,7 +320,7 @@ export default class Send {
    * @method start
    * @returns {Promise<boolean>}
    */
-  public async start(): Promise<boolean> {
+  public async start(): Promise<boolean | never> {
     const { ctx, root, path, buffer }: Send = this;
     const { method, response }: Context = ctx;
 
@@ -350,7 +332,7 @@ export default class Send {
 
     // Path -1 or null byte(s)
     if (path === -1 || path.includes('\0')) {
-      return this.error(400);
+      return ctx.throw(400);
     }
 
     // Malicious path
@@ -433,12 +415,12 @@ export default class Send {
         ctx.set('Content-Range', `bytes */${stats.size}`);
 
         // Unsatisfiable 416
-        return this.error(416);
+        return ctx.throw(416);
       }
 
       // 400
       if (ranges === -2) {
-        return this.error(400);
+        return ctx.throw(400);
       }
 
       // Set stream body
@@ -450,7 +432,7 @@ export default class Send {
           await this.read(path, range);
         }
       } catch (error) {
-        return this.statError(error);
+        return ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
       }
 
       // End stream
