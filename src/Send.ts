@@ -1,3 +1,9 @@
+/**
+ * @module Send
+ * @license MIT
+ * @author nuintun
+ */
+
 import etag from 'etag';
 import { Context } from 'koa';
 import destroy from 'destroy';
