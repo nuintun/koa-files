@@ -60,7 +60,7 @@ app.use(server(root, options));
 
 #### defer: `boolean`
 
-- If true, serves after `return next()`, allowing any downstream middleware to respond first. defaults to `false`.
+- If true, serves after `await next()`, allowing any downstream middleware to respond first. defaults to `false`.
 
 ## Example
 
