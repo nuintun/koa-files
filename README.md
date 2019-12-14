@@ -71,6 +71,8 @@ app.use(server(root, options));
  * @author nuintun
  */
 
+'use strict';
+
 const Koa = require('koa');
 const server = require('koa-files');
 
@@ -78,11 +80,11 @@ const app = new Koa();
 const port = process.env.PORT || 80;
 
 /**
- * @function socketError
+ * @function httpError
  * @param {NodeJS.ErrnoException} error
  * @returns {boolean}
  */
-function socketError(error) {
+function httpError(error) {
   return /^(EOF|EPIPE|ECANCELED|ECONNRESET|ECONNABORTED)$/i.test(error.code);
 }
 
@@ -90,7 +92,7 @@ function socketError(error) {
 app.use(server('tests'));
 
 // Listen error event
-app.on('error', error => !socketError(error) && console.error(error));
+app.on('error', error => !httpError(error) && console.error(error));
 
 // Start server
 app.listen(port, () => console.log(`> server running at: 127.0.0.1:${port}`));
