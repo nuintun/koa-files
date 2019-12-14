@@ -100,7 +100,7 @@ app.listen(port, () => console.log(`> server running at: 127.0.0.1:${port}`));
 
 ## Features
 
-Support single part range, multipart range and download resumption.
+Support multipart range and download resumption.
 
 ## License
 
