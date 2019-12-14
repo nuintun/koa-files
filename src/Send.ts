@@ -27,7 +27,7 @@ export interface Options {
 
 interface Range {
   start: number;
-  end: number;
+  end?: number;
   prefix?: string;
   suffix?: string;
 }
@@ -217,7 +217,7 @@ export default class Send {
     // Set Content-Length
     ctx.length = contentLength;
 
-    return result.length ? result : [{ start: 0, end: size }];
+    return result.length ? result : [{ start: 0 }];
   }
 
   /**
