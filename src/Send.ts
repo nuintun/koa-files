@@ -146,9 +146,9 @@ export default class Send {
    */
   private parseRange(stats: Stats): Ranges {
     const { ctx }: Send = this;
-    const { request }: Context = ctx;
     const result: Range[] = [];
     const { size }: Stats = stats;
+    const { request }: Context = ctx;
 
     // Content-Length
     let contentLength: number = size;
@@ -180,19 +180,19 @@ export default class Send {
             ctx.type = `multipart/byteranges; boundary=${boundary}`;
 
             // Map ranges
-            ranges.forEach(({ start, end }: PRange): void => {
+            ranges.forEach(({ start, end }: PRange, index: number): void => {
+              // The first prefix boundary no \r\n
+              const prefixHead: string = index > 0 ? '\r\n' : '';
               const contentRange: string = `Content-Range: bytes ${start}-${end}/${size}`;
-              const prefix: string = `\r\n--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+              const prefix: string = `${prefixHead}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
 
               // Compute content-length
-              contentLength += end - start + Buffer.byteLength(prefix) + 1;
+              contentLength += end - start + 1 + Buffer.byteLength(prefix);
 
               // Cache range
               result.push({ start, end, prefix });
             });
 
-            // The first prefix boundary remove \r\n
-            result[0].prefix = result[0].prefix.replace(/^\r\n/, '');
             // The last add suffix boundary
             result[result.length - 1].suffix = suffix;
             // Compute content-length
