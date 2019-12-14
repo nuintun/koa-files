@@ -34,10 +34,14 @@ interface Range {
 
 type Ranges = Range[] | -1 | -2;
 
+// Default options
 const defaultOptions: Options = {
   maxAge: 31557600000
 };
 
+/**
+ * @class Send
+ */
 export default class Send {
   private ctx: Context;
   private root: string;
