@@ -288,6 +288,8 @@ export default class Send {
 
       // Error handling code-smell
       file.on('error', (error: NodeJS.ErrnoException): void => {
+        // Unpipe
+        file.unpipe(buffer);
         // Destroy file stream
         destroy(file);
         // Reject
@@ -296,6 +298,8 @@ export default class Send {
 
       // File read stream close
       file.on('close', (): void => {
+        // Unpipe
+        file.unpipe(buffer);
         // Push suffix boundary
         range.suffix && buffer.write(range.suffix);
         // Destroy file stream
