@@ -13,7 +13,7 @@ const port = process.env.PORT || 80;
 /**
  * @function socketError
  * @param {NodeJS.ErrnoException} error
- * @returns {boolean }
+ * @returns {boolean}
  */
 function socketError(error) {
   return /^(EOF|EPIPE|ECANCELED|ECONNRESET|ECONNABORTED)$/i.test(error.code);
