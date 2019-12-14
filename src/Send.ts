@@ -407,24 +407,22 @@ export default class Send {
 
       // Conditional get support
       if (this.isConditionalGET()) {
-        const responseEnd: () => true = () => {
+        if (this.isPreconditionFailure()) {
           // Remove content-type
           response.remove('Content-Type');
 
-          // End with empty content
-          ctx.body = null;
-
-          return true;
-        };
-
-        if (this.isPreconditionFailure()) {
+          // 412
           ctx.status = 412;
 
-          return responseEnd();
+          return true;
         } else if (ctx.fresh) {
+          // Remove content-type
+          response.remove('Content-Type');
+
+          // 304
           ctx.status = 304;
 
-          return responseEnd();
+          return true;
         }
       }
 
@@ -432,8 +430,6 @@ export default class Send {
       if (method === 'HEAD') {
         // Set content-length
         ctx.length = stats.size;
-        // End with empty content
-        ctx.body = null;
 
         return true;
       }
