@@ -10,16 +10,14 @@ import { relative } from 'path';
 const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
 
 /**
- * @function isOutRange
- * @description Test path is out of bound of base
+ * @function isOutRoot
+ * @description Test path is out of bound of root
  * @param {string} path
  * @param {string} root
  * @returns {boolean}
  */
-export function isOutRange(path: string, root: string): boolean {
-  path = relative(root, path);
-
-  return /\.\.(?:[\\/]|$)/.test(path);
+export function isOutRoot(path: string, root: string): boolean {
+  return /\.\.(?:[\\/]|$)/.test(relative(root, path));
 }
 
 /**

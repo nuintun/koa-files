@@ -11,7 +11,7 @@ import { PassThrough } from 'stream';
 import fs, { ReadStream, Stats } from 'fs';
 import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
-import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRange, unixify } from './utils';
+import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRoot, unixify } from './utils';
 
 export type Ignore = false | ((path: string) => boolean);
 
@@ -368,7 +368,7 @@ export default class Send {
     }
 
     // Malicious path
-    if (isOutRange(path, root)) {
+    if (isOutRoot(path, root)) {
       // 403
       return false;
     }
