@@ -366,9 +366,8 @@ export default class Send {
   public async start(): Promise<boolean> {
     const { ctx, root, path }: Send = this;
 
-    // Only support GET and HEAD
+    // Only support GET and HEAD (405)
     if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
-      // 405
       return false;
     }
 
@@ -377,15 +376,13 @@ export default class Send {
       return ctx.throw(400);
     }
 
-    // Malicious path
+    // Malicious path (403)
     if (isOutRoot(path, root)) {
-      // 403
       return false;
     }
 
-    // Is ignore path or file
+    // Is ignore path or file (403 | 404)
     if (this.isIgnore(path)) {
-      // 403 | 404
       return false;
     }
 
@@ -422,13 +419,12 @@ export default class Send {
     if (this.isConditionalGET()) {
       // Request precondition failure
       if (this.isPreconditionFailure()) {
-        // 412
         return ctx.throw(412);
       }
 
-      // Request fresh
+      // Request fresh (304)
       if (ctx.fresh) {
-        // 304
+        // Set status
         ctx.status = 304;
         // Set body null
         ctx.body = null;
