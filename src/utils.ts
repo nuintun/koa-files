@@ -5,7 +5,7 @@
  */
 
 import fs, { Stats } from 'fs';
-import { relative } from 'path';
+import { isAbsolute, relative } from 'path';
 
 const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
 
@@ -17,7 +17,9 @@ const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh
  * @returns {boolean}
  */
 export function isOutRoot(path: string, root: string): boolean {
-  return /\.\.(?:[\\/]|$)/.test(relative(root, path));
+  path = relative(root, path);
+
+  return /\.\.(?:[\\/]|$)/.test(path) || isAbsolute(path);
 }
 
 /**

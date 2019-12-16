@@ -283,15 +283,23 @@ export default class Send {
    * @returns {Promise<true>}
    */
   private read(path: string, range: Range, buffer: PassThrough, end: boolean): Promise<true> {
-    return new Promise((resolve, reject) => {
-      // Write prefix boundary
-      range.prefix && buffer.write(range.prefix);
+    type Resolve = (value: true) => void;
+    type Reject = (reason: NodeJS.ErrnoException) => void;
 
+    return new Promise((resolve: Resolve, reject: Reject): void => {
       // Create file stream
       const file: ReadStream = fs.createReadStream(path, range);
 
-      // Error handling code-smell
-      file.on('error', (error: NodeJS.ErrnoException): void => {
+      // File read stream open
+      if (range.prefix) {
+        file.once('open', (): void => {
+          // Write prefix boundary
+          buffer.write(range.prefix);
+        });
+      }
+
+      // File read stream error
+      file.once('error', (error: NodeJS.ErrnoException): void => {
         // Unpipe
         file.unpipe(buffer);
         // Destroy file stream
@@ -300,12 +308,18 @@ export default class Send {
         reject(error);
       });
 
+      // File read stream end
+      if (range.suffix) {
+        file.once('end', (): void => {
+          // Push suffix boundary
+          buffer.write(range.suffix);
+        });
+      }
+
       // File read stream close
-      file.on('close', (): void => {
+      file.once('close', (): void => {
         // Unpipe
         file.unpipe(buffer);
-        // Push suffix boundary
-        range.suffix && buffer.write(range.suffix);
         // Destroy file stream
         destroy(file);
         // Resolve
@@ -337,14 +351,8 @@ export default class Send {
         await this.read(path, range, ctx.body, --count === 0);
       }
     } catch (error) {
-      // Header already sent
-      if (ctx.headerSent) {
-        // End stream
-        ctx.body.end();
-      } else {
-        // 404 | 500
-        ctx.throw(/^(ENOENT|ENAMETOOLONG|ENOTDIR)$/i.test(error.code) ? 404 : 500);
-      }
+      // End stream when read exception
+      ctx.body.end();
     }
   }
 
@@ -352,7 +360,7 @@ export default class Send {
    * @method start
    * @returns {Promise<boolean>}
    */
-  public async start(): Promise<boolean | never> {
+  public async start(): Promise<boolean> {
     const { ctx, root, path }: Send = this;
     const { method, response }: Context = ctx;
 
@@ -408,19 +416,19 @@ export default class Send {
       // Conditional get support
       if (this.isConditionalGET()) {
         if (this.isPreconditionFailure()) {
-          // Remove content-type
-          response.remove('Content-Type');
-
           // 412
           ctx.status = 412;
 
-          return true;
-        } else if (ctx.fresh) {
           // Remove content-type
           response.remove('Content-Type');
 
+          return true;
+        } else if (ctx.fresh) {
           // 304
           ctx.status = 304;
+
+          // Remove content-type
+          response.remove('Content-Type');
 
           return true;
         }
