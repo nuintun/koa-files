@@ -117,7 +117,10 @@ export default class Send {
     const { request, response }: Context = this.ctx;
     const ifRange: string = request.get('If-Range');
 
-    if (!ifRange) return true;
+    // No If-Range
+    if (!ifRange) {
+      return true;
+    }
 
     // If-Range as etag
     if (isETag(ifRange)) {
@@ -397,14 +400,20 @@ export default class Send {
       return false;
     }
 
-    // File not exist
-    if (!stats) return false;
+    // File not exist (404 | 500)
+    if (!stats) {
+      return false;
+    }
 
     // Is directory (403)
-    if (stats.isDirectory()) return false;
+    if (stats.isDirectory()) {
+      return false;
+    }
 
     // Not a directory but has trailing slash (404)
-    if (hasTrailingSlash(path)) return false;
+    if (hasTrailingSlash(path)) {
+      return false;
+    }
 
     // Setup headers
     this.setupHeaders(path, stats);
