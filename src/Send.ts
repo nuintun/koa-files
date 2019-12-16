@@ -362,10 +362,9 @@ export default class Send {
    */
   public async start(): Promise<boolean> {
     const { ctx, root, path }: Send = this;
-    const { method, response }: Context = ctx;
 
     // Only support GET and HEAD
-    if (method !== 'GET' && method !== 'HEAD') {
+    if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
       // 405
       return false;
     }
@@ -398,73 +397,65 @@ export default class Send {
       return false;
     }
 
-    // File exist
-    if (stats) {
-      // Is directory
-      if (stats.isDirectory()) {
-        // 403
-        return false;
-      } else if (hasTrailingSlash(path)) {
-        // 404
-        // Not a directory but has trailing slash
-        return false;
+    // File not exist
+    if (!stats) return false;
+
+    // Is directory (403)
+    if (stats.isDirectory()) return false;
+
+    // Not a directory but has trailing slash (404)
+    if (hasTrailingSlash(path)) return false;
+
+    // Setup headers
+    this.setupHeaders(path, stats);
+
+    // Conditional get support
+    if (this.isConditionalGET()) {
+      // Request precondition failure
+      if (this.isPreconditionFailure()) {
+        // 412
+        return ctx.throw(412);
       }
 
-      // Setup headers
-      this.setupHeaders(path, stats);
-
-      // Conditional get support
-      if (this.isConditionalGET()) {
-        if (this.isPreconditionFailure()) {
-          // 412
-          ctx.status = 412;
-
-          // Remove content-type
-          response.remove('Content-Type');
-
-          return true;
-        } else if (ctx.fresh) {
-          // 304
-          ctx.status = 304;
-
-          // Remove content-type
-          response.remove('Content-Type');
-
-          return true;
-        }
-      }
-
-      // Head request
-      if (method === 'HEAD') {
-        // Set content-length
-        ctx.length = stats.size;
+      // Request fresh
+      if (ctx.fresh) {
+        // 304
+        ctx.status = 304;
+        // Set body null
+        ctx.body = null;
 
         return true;
       }
+    }
 
-      // Parse ranges
-      const ranges: Ranges = this.parseRange(stats);
-
-      // 416
-      if (ranges === -1) {
-        // Set content-range
-        ctx.set('Content-Range', `bytes */${stats.size}`);
-
-        // Unsatisfiable 416
-        return ctx.throw(416);
-      }
-
-      // 400
-      if (ranges === -2) {
-        return ctx.throw(400);
-      }
-
-      // Send file
-      this.send(path, ranges);
+    // Head request
+    if (ctx.method === 'HEAD') {
+      // Set content-length
+      ctx.length = stats.size;
 
       return true;
     }
 
-    return false;
+    // Parse ranges
+    const ranges: Ranges = this.parseRange(stats);
+
+    // 416
+    if (ranges === -1) {
+      // Set content-range
+      ctx.set('Content-Range', `bytes */${stats.size}`);
+
+      // Unsatisfiable 416
+      return ctx.throw(416);
+    }
+
+    // 400
+    if (ranges === -2) {
+      return ctx.throw(400);
+    }
+
+    // Send file
+    this.send(path, ranges);
+
+    return true;
   }
 }
