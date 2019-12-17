@@ -169,8 +169,14 @@ export default class Send {
         // Parse range -1 -2 or []
         const ranges: -1 | -2 | PRanges = parseRange(size, range, { combine: true });
 
-        // Valid ranges, support multiple ranges
-        if (Array.isArray(ranges) && ranges.type === 'bytes') {
+        // -1 signals an unsatisfiable range
+        // -2 signals a malformed header string
+        if (ranges === -1 || ranges === -2) {
+          return ranges;
+        }
+
+        // Ranges ok, support multiple ranges
+        if (ranges.type === 'bytes') {
           // Set 206 status
           ctx.status = 206;
 
@@ -215,8 +221,6 @@ export default class Send {
             // Cache range
             result.push({ start, end });
           }
-        } else {
-          return ranges;
         }
       }
     }
