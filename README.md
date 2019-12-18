@@ -57,7 +57,7 @@ app.use(server(root, options));
 
 #### maxAge: `number`
 
-- Browser cache max-age in milliseconds. defaults to `31557600000`.
+- Browser cache max-age in seconds. defaults to `31557600`.
 
 #### defer: `boolean`
 

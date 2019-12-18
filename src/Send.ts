@@ -36,7 +36,7 @@ type Ranges = Range[] | -1 | -2;
 
 // Default options
 const defaultOptions: Options = {
-  maxAge: 31557600000
+  maxAge: 31557600
 };
 
 /**
@@ -254,7 +254,7 @@ export default class Send {
     // Cache-Control
     if (options.cacheControl !== false) {
       // Get maxAge
-      const maxAge: number = Math.floor((Math.abs(options.maxAge) || defaultOptions.maxAge) / 1000);
+      const maxAge: number = Math.floor(Math.abs(options.maxAge)) || defaultOptions.maxAge;
 
       // Get Cache-Control
       let cacheControl: string = `public, max-age=${maxAge}`;
