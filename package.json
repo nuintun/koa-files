@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A static files serving middleware for koa.",
   "main": "index.js",
   "typings": "typings/index.d.ts",
@@ -45,12 +45,12 @@
   "devDependencies": {
     "@types/destroy": "^1.0.0",
     "@types/etag": "^1.8.0",
-    "@types/koa": "^2.11.0",
+    "@types/koa": "^2.11.3",
     "@types/range-parser": "^1.2.3",
     "del": "^5.1.0",
     "koa": "^2.11.0",
-    "rollup": "^1.27.14",
-    "rollup-plugin-typescript2": "^0.25.3",
-    "typescript": "^3.7.4"
+    "rollup": "^2.3.3",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "typescript": "^3.8.3"
   }
 }
