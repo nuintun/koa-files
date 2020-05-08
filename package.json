@@ -5,8 +5,8 @@
   "main": "index.js",
   "typings": "typings/index.d.ts",
   "scripts": {
-    "build": "node rollup.js",
-    "prepublishOnly": "node rollup.js",
+    "prepublishOnly": "npm run build",
+    "build": "rollup -c rollup.config.js",
     "tests": "npm run build & node tests/server.js"
   },
   "repository": {
@@ -47,9 +47,9 @@
     "@types/etag": "^1.8.0",
     "@types/koa": "^2.11.3",
     "@types/range-parser": "^1.2.3",
-    "del": "^5.1.0",
     "koa": "^2.11.0",
-    "rollup": "^2.3.3",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.8.2",
     "rollup-plugin-typescript2": "^0.27.0",
     "typescript": "^3.8.3"
   }
