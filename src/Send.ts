@@ -364,10 +364,10 @@ export default class Send {
   }
 
   /**
-   * @method start
+   * @method response
    * @returns {Promise<boolean>}
    */
-  public async start(): Promise<boolean> {
+  public async response(): Promise<boolean> {
     const { ctx, root, path }: Send = this;
 
     // Only support GET and HEAD (405)

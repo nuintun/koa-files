@@ -20,14 +20,14 @@ export default function server(root: string, options: Options = {}): Middleware 
   if (options.defer) {
     return async (ctx: Context, next: Next): Promise<void> => {
       await next();
-      await new Send(ctx, root, options).start();
+      await new Send(ctx, root, options).response();
     };
   }
 
   return async (ctx: Context, next: Next): Promise<void> => {
-    const matched: boolean = await new Send(ctx, root, options).start();
+    const respond: boolean = await new Send(ctx, root, options).response();
 
-    !matched && (await next());
+    !respond && (await next());
   };
 }
 
