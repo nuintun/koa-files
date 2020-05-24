@@ -49,7 +49,7 @@
     "@types/range-parser": "^1.2.3",
     "koa": "^2.12.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.10.5",
+    "rollup": "^2.10.8",
     "rollup-plugin-typescript2": "^0.27.1",
     "typescript": "^3.9.3"
   }
