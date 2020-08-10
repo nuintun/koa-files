@@ -29,6 +29,7 @@ export default {
     strict: true,
     format: 'cjs',
     interop: false,
+    exports: 'auto',
     esModule: false,
     file: 'index.js',
     preferConst: true
