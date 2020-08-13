@@ -35,9 +35,9 @@ app.use(server(root, options));
 
 - Enable or disable accepting ranged requests. Disabling this will not send Accept-Ranges and ignore the contents of the Range request header. defaults to `true`.
 
-#### cacheControl: `boolean`
+#### cacheControl: `false | string`
 
-- Enable or disable setting Cache-Control response header, defaults to true. Disabling this will ignore the immutable and maxAge options. defaults to `true`.
+- Set Cache-Control response header, defaults to `public, max-age=31557600`, see docs: [Cache-Control in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
 
 #### etag: `boolean`
 
@@ -47,17 +47,9 @@ app.use(server(root, options));
 
 - Set ignore rules. defaults to `false`.
 
-#### immutable: `boolean`
-
-- Enable or diable the immutable directive in the Cache-Control response header, defaults to false. If set to true, the maxAge option should also be specified to enable caching. The immutable directive will prevent supported clients from making conditional requests during the life of the maxAge option to check if the file has changed. defaults to `false`.
-
 #### lastModified: `boolean`
 
 - Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value. defaults to `true`.
-
-#### maxAge: `number`
-
-- Browser cache max-age in seconds. defaults to `31557600`.
 
 #### defer: `boolean`
 
