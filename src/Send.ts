@@ -16,13 +16,11 @@ import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFr
 export type Ignore = false | ((path: string) => boolean);
 
 export interface Options {
-  acceptRanges?: boolean;
-  cacheControl?: boolean;
   etag?: boolean;
   ignore?: Ignore;
-  immutable?: boolean;
+  acceptRanges?: boolean;
   lastModified?: boolean;
-  maxAge?: number;
+  cacheControl?: false | string;
 }
 
 interface Range {
@@ -33,11 +31,6 @@ interface Range {
 }
 
 type Ranges = Range[] | -1 | -2;
-
-// Default options
-const defaultOptions: Options = {
-  maxAge: 31557600
-};
 
 /**
  * @class Send
@@ -55,14 +48,17 @@ export default class Send {
    * @param {Options} options
    */
   constructor(ctx: Context, root: string = '.', options: Options) {
-    this.ctx = ctx;
-    this.root = unixify(resolve(root));
-    this.options = { ...defaultOptions, ...options };
+    let { cacheControl }: Options = options;
 
-    // Decode path
     const path: string | -1 = decodeURI(ctx.path);
 
-    // Get real path
+    if (cacheControl !== false && typeof cacheControl !== 'string') {
+      cacheControl = 'public, max-age=31557600';
+    }
+
+    this.ctx = ctx;
+    this.root = unixify(resolve(root));
+    this.options = { ...options, cacheControl };
     this.path = path === -1 ? -1 : unixify(join(this.root, path));
   }
 
@@ -242,35 +238,24 @@ export default class Send {
     // Set status
     ctx.status = 200;
 
+    // Set Content-Type
+    ctx.type = extname(path);
+
     // Accept-Ranges
     if (options.acceptRanges !== false) {
       // Set Accept-Ranges
       ctx.set('Accept-Ranges', 'bytes');
     }
 
-    // Set Content-Type
-    ctx.type = extname(path);
-
     // Cache-Control
     if (options.cacheControl !== false) {
-      // Get maxAge
-      const maxAge: number = Math.floor(Math.abs(options.maxAge)) || defaultOptions.maxAge;
-
-      // Get Cache-Control
-      let cacheControl: string = `public, max-age=${maxAge}`;
-
-      // Immutable
-      if (options.immutable) {
-        cacheControl += ', immutable';
-      }
-
       // Set Cache-Control
-      ctx.set('Cache-Control', cacheControl);
+      ctx.set('Cache-Control', options.cacheControl);
     }
 
     // Last-Modified
     if (options.lastModified !== false) {
-      // Get mtime utc string
+      // Set mtime utc string
       ctx.set('Last-Modified', stats.mtime.toUTCString());
     }
 
