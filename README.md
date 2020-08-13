@@ -43,13 +43,13 @@ app.use(server(root, options));
 
 - Enable or disable etag generation, defaults to `true`.
 
-#### ignore: `false | (path: string) => boolean`
-
-- Set ignore rules. defaults to `false`.
-
 #### lastModified: `boolean`
 
 - Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value. defaults to `true`.
+
+#### ignore: `false | (path: string) => boolean`
+
+- Set ignore rules. defaults to `false`.
 
 #### defer: `boolean`
 
