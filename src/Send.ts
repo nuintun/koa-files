@@ -51,8 +51,9 @@ export default class Send {
     let { cacheControl }: Options = options;
 
     const path: string | -1 = decodeURI(ctx.path);
+    const { toString }: Object = Object.prototype;
 
-    if (cacheControl !== false && typeof cacheControl !== 'string') {
+    if (cacheControl !== false && toString.call(cacheControl) !== '[object String]') {
       cacheControl = 'public, max-age=31557600';
     }
 
