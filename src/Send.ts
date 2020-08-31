@@ -427,6 +427,8 @@ export default class Send {
     if (ctx.method === 'HEAD') {
       // Set content-length
       ctx.length = stats.size;
+      // Set body null
+      ctx.body = null;
 
       return true;
     }
