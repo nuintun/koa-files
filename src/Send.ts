@@ -371,7 +371,7 @@ export default class Send {
       return false;
     }
 
-    // Is ignore path or file (403 | 404)
+    // Is ignore path or file (403)
     if (this.isIgnore(path)) {
       return false;
     }
