@@ -13,14 +13,14 @@ import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
 import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRoot, unixify } from './utils';
 
-export type Ignore = false | ((path: string) => boolean);
+export type Ignore = (path: string) => boolean;
 
 export interface Options {
   etag?: boolean;
   ignore?: Ignore;
+  cacheControl?: string;
   acceptRanges?: boolean;
   lastModified?: boolean;
-  cacheControl?: false | string;
 }
 
 interface Range {
@@ -51,11 +51,6 @@ export default class Send {
     let { cacheControl }: Options = options;
 
     const path: string | -1 = decodeURI(ctx.path);
-    const { toString }: Object = Object.prototype;
-
-    if (cacheControl !== false && toString.call(cacheControl) !== '[object String]') {
-      cacheControl = 'public, max-age=31557600';
-    }
 
     this.ctx = ctx;
     this.root = unixify(resolve(root));
@@ -235,6 +230,8 @@ export default class Send {
    */
   private setupHeaders(path: string, stats: Stats): void {
     const { ctx, options }: Send = this;
+    const { toString }: Object = Object.prototype;
+    const { acceptRanges, cacheControl, lastModified }: Options = options;
 
     // Set status
     ctx.status = 200;
@@ -242,28 +239,28 @@ export default class Send {
     // Set Content-Type
     ctx.type = extname(path);
 
-    // Accept-Ranges
-    if (options.acceptRanges !== false) {
-      // Set Accept-Ranges
-      ctx.set('Accept-Ranges', 'bytes');
-    }
-
-    // Cache-Control
-    if (options.cacheControl !== false) {
-      // Set Cache-Control
-      ctx.set('Cache-Control', options.cacheControl);
-    }
-
-    // Last-Modified
-    if (options.lastModified !== false) {
-      // Set mtime utc string
-      ctx.set('Last-Modified', stats.mtime.toUTCString());
-    }
-
     // ETag
     if (options.etag !== false) {
       // Set ETag
       ctx.set('ETag', etag(stats));
+    }
+
+    // Accept-Ranges
+    if (acceptRanges !== false) {
+      // Set Accept-Ranges
+      ctx.set('Accept-Ranges', 'bytes');
+    }
+
+    // Last-Modified
+    if (lastModified !== false) {
+      // Set mtime utc string
+      ctx.set('Last-Modified', stats.mtime.toUTCString());
+    }
+
+    // Cache-Control
+    if (cacheControl && toString.call(cacheControl) === '[object String]') {
+      // Set Cache-Control
+      ctx.set('Cache-Control', cacheControl);
     }
   }
 

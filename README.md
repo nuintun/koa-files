@@ -31,27 +31,27 @@ app.use(server(root, options));
 
 ### Options
 
-#### acceptRanges: `boolean`
+#### acceptRanges?: `boolean`
 
 - Enable or disable accepting ranged requests. Disabling this will not send Accept-Ranges and ignore the contents of the Range request header. defaults to `true`.
 
-#### cacheControl: `false | string`
+#### cacheControl?: `string`
 
-- Set Cache-Control response header, defaults to `public, max-age=31557600`, see docs: [Cache-Control in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
+- Set Cache-Control response header, defaults to `undefined`, see docs: [Cache-Control in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
 
-#### etag: `boolean`
+#### etag?: `boolean`
 
 - Enable or disable etag generation, defaults to `true`.
 
-#### lastModified: `boolean`
+#### lastModified?: `boolean`
 
 - Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value. defaults to `true`.
 
-#### ignore: `false | (path: string) => boolean`
+#### ignore?: `(path: string) => boolean`
 
-- Set ignore rules. defaults to `false`.
+- Set ignore rules. defaults to `undefined`.
 
-#### defer: `boolean`
+#### defer?: `boolean`
 
 - If true, serves after `await next()`, allowing any downstream middleware to respond first. defaults to `false`.
 
@@ -82,7 +82,7 @@ function httpError(error) {
 }
 
 // Static files server
-app.use(server('tests'));
+app.use(server('tests', { cacheControl: 'public, max-age=31557600' }));
 
 // Listen error event
 app.on('error', error => !httpError(error) && console.error(error));
