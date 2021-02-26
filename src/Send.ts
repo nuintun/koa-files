@@ -327,22 +327,23 @@ export default class Send {
    * @param {Range[]} ranges
    */
   private async send(path: string, ranges: Range[]): Promise<void> {
-    const { ctx }: Send = this;
-
-    // Set stream body, highWaterMark 64kb
-    ctx.body = new PassThrough({ highWaterMark: 65536 });
-
     // Ranges count
     let count: number = ranges.length;
+
+    // Set stream body, highWaterMark 64kb
+    const stream: PassThrough = new PassThrough({ highWaterMark: 65536 });
+
+    // Set response body
+    this.ctx.body = stream;
 
     // Read file ranges
     try {
       for (const range of ranges) {
-        await this.read(path, range, ctx.body, --count === 0);
+        await this.read(path, range, stream, --count === 0);
       }
     } catch (error) {
       // End stream when read exception
-      ctx.body.end();
+      stream.end();
     }
   }
 
