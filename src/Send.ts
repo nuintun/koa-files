@@ -13,14 +13,12 @@ import { extname, join, resolve } from 'path';
 import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
 import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRoot, unixify } from './utils';
 
-export type Ignore = (path: string) => boolean;
-
 export interface Options {
   etag?: boolean;
-  ignore?: Ignore;
   cacheControl?: string;
   acceptRanges?: boolean;
   lastModified?: boolean;
+  ignore?: (path: string) => boolean;
 }
 
 interface Range {

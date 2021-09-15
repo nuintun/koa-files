@@ -5,9 +5,9 @@
  */
 
 import { Context, Middleware, Next } from 'koa';
-import Send, { Ignore, Options as SendOptions } from './Send';
+import Send, { Options as SendOptions } from './Send';
 
-interface Options extends SendOptions {
+export interface Options extends SendOptions {
   defer?: boolean;
 }
 
@@ -30,6 +30,3 @@ export default function server(root: string, options: Options = {}): Middleware 
     !respond && (await next());
   };
 }
-
-// Export types
-export { Options, Ignore };

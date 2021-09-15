@@ -69,11 +69,8 @@ export function boundaryGenerator(): string {
  * @returns {Promise<Stats>}
  */
 export function fstat(path: string): Promise<Stats> {
-  type Resolve = (value: Stats) => void;
-  type Reject = (reason: NodeJS.ErrnoException) => void;
-
-  return new Promise((resolve: Resolve, reject: Reject): void => {
-    fs.stat(path, (error: NodeJS.ErrnoException, stats: Stats): void => {
+  return new Promise<Stats>((resolve, reject): void => {
+    fs.stat(path, (error, stats): void => {
       error ? reject(error) : resolve(stats);
     });
   });

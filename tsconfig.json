@@ -1,18 +1,26 @@
 {
   "compilerOptions": {
-    "pretty": true,
-    "newLine": "LF",
-    "target": "ES2017",
+    "strict": true,
+    "newLine": "lf",
+    "allowJs": true,
+    "jsx": "preserve",
     "module": "ESNext",
-    "declaration": false,
-    "alwaysStrict": true,
-    "importHelpers": true,
-    "noImplicitAny": true,
+    "target": "ES2017",
+    "skipLibCheck": true,
     "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true,
+    "noUnusedParameters": true,
+    "experimentalDecorators": true,
+    "useUnknownInCatchVariables": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
