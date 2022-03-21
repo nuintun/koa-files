@@ -1,20 +1,19 @@
 {
   "compilerOptions": {
     "strict": true,
+    "pretty": true,
     "newLine": "lf",
-    "allowJs": true,
-    "jsx": "preserve",
-    "module": "ESNext",
+    "jsx": "react-jsx",
     "target": "ES2017",
+    "module": "ESNext",
     "skipLibCheck": true,
+    "importHelpers": true,
     "noUnusedLocals": true,
     "esModuleInterop": true,
-    "isolatedModules": true,
     "resolveJsonModule": true,
     "moduleResolution": "Node",
     "noUnusedParameters": true,
     "experimentalDecorators": true,
-    "useUnknownInCatchVariables": false,
     "forceConsistentCasingInFileNames": true
   },
   "include": [

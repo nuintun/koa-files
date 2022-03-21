@@ -1,14 +1,21 @@
 {
   "name": "koa-files",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A static files serving middleware for koa.",
-  "main": "index.js",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
   "typings": "typings/index.d.ts",
   "scripts": {
-    "format": "prettier --write src",
+    "tests": "node tests",
+    "lint": "tsc --noEmit",
+    "clean": "node tools/clean.js",
     "prepublishOnly": "npm run build",
-    "build": "rollup -c rollup.config.js",
-    "test": "npm run build & node tests/server.js"
+    "build:cjs": "rollup -c tools/rollup.cjs.js",
+    "build:esm": "rollup -c tools/rollup.esm.js",
+    "format": "prettier --write tools src cjs esm tests typings",
+    "build": "npm run clean && npm run build:main && npm run format",
+    "build:main": "npm run build:cjs && npm run build:esm && npm run build:typings",
+    "build:typings": "tsc --declaration --emitDeclarationOnly --declarationDir typings"
   },
   "repository": {
     "type": "git",
@@ -39,20 +46,22 @@
     "koa": "^2.0.0"
   },
   "dependencies": {
-    "destroy": "^1.0.4",
+    "destroy": "^1.2.0",
     "etag": "^1.8.1",
-    "range-parser": "^1.2.1"
+    "range-parser": "^1.2.1",
+    "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "^8.3.1",
     "@types/destroy": "^1.0.0",
     "@types/etag": "^1.8.1",
     "@types/koa": "^2.13.4",
     "@types/range-parser": "^1.2.4",
-    "koa": "^2.13.1",
-    "prettier": "^2.4.1",
+    "koa": "^2.13.4",
+    "magic-string": "^0.26.1",
+    "prettier": "^2.6.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.56.3",
-    "rollup-plugin-typescript2": "^0.30.0",
-    "typescript": "^4.4.3"
+    "rollup": "^2.70.1",
+    "typescript": "^4.6.2"
   }
 }
