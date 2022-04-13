@@ -5,6 +5,11 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "typings": "typings/index.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "typings"
+  ],
   "scripts": {
     "tests": "node tests",
     "lint": "tsc --noEmit",
@@ -59,9 +64,9 @@
     "@types/range-parser": "^1.2.4",
     "koa": "^2.13.4",
     "magic-string": "^0.26.1",
-    "prettier": "^2.6.0",
+    "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "rollup": "^2.70.1",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.3"
   }
 }
