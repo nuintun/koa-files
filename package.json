@@ -68,7 +68,7 @@
     "@types/koa": "^2.13.4",
     "@types/range-parser": "^1.2.4",
     "koa": "^2.13.4",
-    "magic-string": "^0.26.1",
+    "magic-string": "^0.26.2",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "rollup": "^2.72.1",
