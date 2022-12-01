@@ -3,8 +3,8 @@ root = true
 
 # Default files
 [*]
-indent_size = 2
 charset = utf-8
+indent_size = 2
 end_of_line = lf
 indent_style = space
 insert_final_newline = true
@@ -21,20 +21,4 @@ indent_style = tab
 # Minified files
 [*.min.*]
 indent_style = false
-insert_final_newline = false
-
-# NPM package files
-[package.json]
-insert_final_newline = false
-
-# Typescript configure files
-[tsconfig.json]
-insert_final_newline = false
-
-# VSCode setting files
-[.vscode/**/*.json]
-insert_final_newline = false
-
-# Prettier setting files
-[.prettierrc]
 insert_final_newline = false

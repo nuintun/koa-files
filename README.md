@@ -2,11 +2,7 @@
 
 > A static files serving middleware for koa.
 >
-> [![NPM Version][npm-image]][npm-url]
-> [![Download Status][download-image]][npm-url]
-> [![Snyk Vulnerabilities][snyk-image]][snyk-url]
-> ![Node Version][node-image]
-> [![Dependencies][david-image]][david-url]
+> [![NPM Version][npm-image]][npm-url] > [![Download Status][download-image]][npm-url] > [![Snyk Vulnerabilities][snyk-image]][snyk-url] > ![Node Version][node-image] > [![Dependencies][david-image]][david-url]
 
 ## Installation
 
