@@ -59,19 +59,19 @@
     "destroy": "^1.2.0",
     "etag": "^1.8.1",
     "range-parser": "^1.2.1",
-    "tslib": "^2.4.0"
+    "tslib": "^2.4.1"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8.3.2",
+    "@rollup/plugin-typescript": "^10.0.1",
     "@types/destroy": "^1.0.0",
     "@types/etag": "^1.8.1",
-    "@types/koa": "^2.13.4",
+    "@types/koa": "^2.13.5",
     "@types/range-parser": "^1.2.4",
     "koa": "^2.13.4",
-    "magic-string": "^0.26.2",
-    "prettier": "^2.6.2",
+    "magic-string": "^0.26.7",
+    "prettier": "^2.8.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.72.1",
-    "typescript": "^4.6.4"
+    "rollup": "^3.5.1",
+    "typescript": "^4.9.3"
   }
 }
