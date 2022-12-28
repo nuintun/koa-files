@@ -7,7 +7,6 @@
 > [![Download Status][download-image]][npm-url]
 > [![Snyk Vulnerabilities][snyk-image]][snyk-url]
 > ![Node Version][node-image]
-> [![Dependencies][david-image]][david-url]
 
 ## Installation
 
@@ -106,5 +105,3 @@ MIT
 [snyk-image]: https://img.shields.io/snyk/vulnerabilities/github/nuintun/koa-files.svg?style=flat-square
 [snyk-url]: https://snyk.io/test/github/nuintun/koa-files
 [node-image]: https://img.shields.io/node/v/koa-files.svg?style=flat-square
-[david-image]: https://img.shields.io/david/nuintun/koa-files.svg?style=flat-square
-[david-url]: https://david-dm.org/nuintun/koa-files
