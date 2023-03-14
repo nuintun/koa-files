@@ -5,12 +5,12 @@
  */
 
 import etag from 'etag';
-import { Context } from 'koa';
 import destroy from 'destroy';
+import { Context } from 'koa';
+import fs, { Stats } from 'fs';
 import { PassThrough } from 'stream';
-import fs, { ReadStream, Stats } from 'fs';
+import parseRange from 'range-parser';
 import { extname, join, resolve } from 'path';
-import parseRange, { Range as PRange, Ranges as PRanges } from 'range-parser';
 import { boundaryGenerator, decodeURI, fstat, hasTrailingSlash, isETag, isETagFresh, isOutRoot, unixify } from './utils';
 
 export interface Options {
@@ -34,34 +34,28 @@ type Ranges = Range[] | -1 | -2;
  * @class Send
  */
 export default class Send {
-  private ctx: Context;
   private root: string;
   private options: Options;
-  private path: string | -1;
 
   /**
    * @constructor
-   * @param {Context} ctx
    * @param {string} root
    * @param {Options} options
    */
-  constructor(ctx: Context, root: string = '.', options: Options) {
-    let { cacheControl }: Options = options;
+  constructor(root: string, options: Options = {}) {
+    const { cacheControl } = options;
 
-    const path: string | -1 = decodeURI(ctx.path);
-
-    this.ctx = ctx;
     this.root = unixify(resolve(root));
     this.options = { ...options, cacheControl };
-    this.path = path === -1 ? -1 : unixify(join(this.root, path));
   }
 
   /**
    * @method isConditionalGET
+   * @param {Context} context
    * @returns {boolean}
    */
-  private isConditionalGET(): boolean {
-    const { request }: Context = this.ctx;
+  private isConditionalGET(context: Context): boolean {
+    const { request } = context;
 
     return !!(
       request.get('If-Match') ||
@@ -73,25 +67,26 @@ export default class Send {
 
   /**
    * @method isPreconditionFailure
+   * @param {Context} context
    * @returns {boolean}
    */
-  private isPreconditionFailure(): boolean {
-    const { request, response }: Context = this.ctx;
+  private isPreconditionFailure(context: Context): boolean {
+    const { request, response } = context;
 
     // If-Match
-    const match: string = request.get('If-Match');
+    const match = request.get('If-Match');
 
     if (match) {
-      const etag: string = response.get('ETag');
+      const etag = response.get('ETag');
 
       return !etag || (match !== '*' && !isETagFresh(match, etag));
     }
 
     // If-Unmodified-Since
-    const unmodifiedSince: number = Date.parse(request.get('If-Unmodified-Since'));
+    const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
 
     if (!isNaN(unmodifiedSince)) {
-      const lastModified: number = Date.parse(response.get('Last-Modified'));
+      const lastModified = Date.parse(response.get('Last-Modified'));
 
       return isNaN(lastModified) || lastModified > unmodifiedSince;
     }
@@ -101,11 +96,12 @@ export default class Send {
 
   /**
    * @method isRangeFresh
+   * @param {Context} context
    * @returns {boolean}
    */
-  private isRangeFresh(): boolean {
-    const { request, response }: Context = this.ctx;
-    const ifRange: string = request.get('If-Range');
+  private isRangeFresh(context: Context): boolean {
+    const { request, response } = context;
+    const ifRange = request.get('If-Range');
 
     // No If-Range
     if (!ifRange) {
@@ -114,13 +110,13 @@ export default class Send {
 
     // If-Range as etag
     if (isETag(ifRange)) {
-      const etag: string = response.get('ETag');
+      const etag = response.get('ETag');
 
       return !!(etag && isETagFresh(ifRange, etag));
     }
 
     // If-Range as modified date
-    const lastModified: string = response.get('Last-Modified');
+    const lastModified = response.get('Last-Modified');
 
     return Date.parse(lastModified) <= Date.parse(ifRange);
   }
@@ -131,134 +127,137 @@ export default class Send {
    * @returns {boolean}
    */
   private isIgnore(path: string): boolean {
-    const { ignore }: Options = this.options;
+    const { ignore } = this.options;
 
     return (typeof ignore === 'function' ? ignore(path) : false) === true;
   }
 
   /**
    * @method parseRange
+   * @param {Context} context
    * @param {Stats} stats
    * @returns {Ranges}
    */
-  private parseRange(stats: Stats): Ranges {
-    const { ctx }: Send = this;
-    const result: Range[] = [];
-    const { size }: Stats = stats;
-    const { request }: Context = ctx;
+  private parseRange(context: Context, stats: Stats): Ranges {
+    const { size } = stats;
+    const { request } = context;
 
     // Content-Length
-    let contentLength: number = size;
+    let contentLength = size;
+
+    // Ranges
+    const ranges: Range[] = [];
 
     // Range support
     if (this.options.acceptRanges !== false) {
-      const range: string = request.get('Range');
+      const range = request.get('Range');
 
       // Range fresh
-      if (range && this.isRangeFresh()) {
+      if (range && this.isRangeFresh(context)) {
         // Parse range -1 -2 or []
-        const ranges: -1 | -2 | PRanges = parseRange(size, range, { combine: true });
+        const parsed = parseRange(size, range, { combine: true });
 
         // -1 signals an unsatisfiable range
         // -2 signals a malformed header string
-        if (ranges === -1 || ranges === -2) {
-          return ranges;
+        if (parsed === -1 || parsed === -2) {
+          return parsed;
         }
 
         // Ranges ok, support multiple ranges
-        if (ranges.type === 'bytes') {
+        if (parsed.type === 'bytes') {
           // Set 206 status
-          ctx.status = 206;
+          context.status = 206;
 
           // Multiple ranges
-          if (ranges.length > 1) {
+          if (parsed.length > 1) {
             // Reset content-length
             contentLength = 0;
 
             // Range boundary
-            const boundary: string = `<${boundaryGenerator()}>`;
-            const suffix: string = `\r\n--${boundary}--\r\n`;
-            const contentType: string = `Content-Type: ${ctx.type}`;
+            const boundary = `<${boundaryGenerator()}>`;
+            const suffix = `\r\n--${boundary}--\r\n`;
+            const contentType = `Content-Type: ${context.type}`;
 
-            ctx.type = `multipart/byteranges; boundary=${boundary}`;
+            context.type = `multipart/byteranges; boundary=${boundary}`;
 
             // Map ranges
-            ranges.forEach(({ start, end }: PRange, index: number): void => {
+            parsed.forEach(({ start, end }, index) => {
               // The first prefix boundary no \r\n
-              const prefixHead: string = index > 0 ? '\r\n' : '';
-              const contentRange: string = `Content-Range: bytes ${start}-${end}/${size}`;
-              const prefix: string = `${prefixHead}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+              const prefixHead = index > 0 ? '\r\n' : '';
+              const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
+              const prefix = `${prefixHead}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
 
               // Compute content-length
               contentLength += end - start + 1 + Buffer.byteLength(prefix);
 
               // Cache range
-              result.push({ start, end, prefix });
+              ranges.push({ start, end, prefix });
             });
 
             // The last add suffix boundary
-            result[result.length - 1].suffix = suffix;
+            ranges[ranges.length - 1].suffix = suffix;
             // Compute content-length
             contentLength += Buffer.byteLength(suffix);
           } else {
-            const { start, end }: PRange = ranges[0];
+            const { start, end } = parsed[0];
 
-            ctx.set('Content-Range', `bytes ${start}-${end}/${size}`);
+            context.set('Content-Range', `bytes ${start}-${end}/${size}`);
 
             // Compute content-length
             contentLength = end - start + 1;
 
             // Cache range
-            result.push({ start, end });
+            ranges.push({ start, end });
           }
         }
       }
     }
 
     // Set Content-Length
-    ctx.length = contentLength;
+    context.length = contentLength;
 
-    return result.length ? result : [{ start: 0 }];
+    return ranges.length ? ranges : [{ start: 0 }];
   }
 
   /**
    * @method setupHeaders
+   * @param {Context} context
    * @param {string} path
    * @param {Stats} stats
    */
-  private setupHeaders(path: string, stats: Stats): void {
-    const { ctx, options }: Send = this;
-    const { toString }: Object = Object.prototype;
-    const { acceptRanges, cacheControl, lastModified }: Options = options;
+  private setupHeaders(context: Context, path: string, stats: Stats): void {
+    const { options } = this;
+    const { toString } = Object.prototype;
+    const { acceptRanges, cacheControl, lastModified } = options;
 
     // Set status
-    ctx.status = 200;
+    context.status = 200;
 
     // Set Content-Type
-    ctx.type = extname(path);
+    context.type = extname(path);
 
     // ETag
     if (options.etag !== false) {
       // Set ETag
-      ctx.set('ETag', etag(stats));
+      context.set('ETag', etag(stats));
     }
 
     // Accept-Ranges
     if (acceptRanges !== false) {
       // Set Accept-Ranges
-      ctx.set('Accept-Ranges', 'bytes');
+      context.set('Accept-Ranges', 'bytes');
     }
 
     // Last-Modified
     if (lastModified !== false) {
       // Set mtime utc string
-      ctx.set('Last-Modified', stats.mtime.toUTCString());
+      context.set('Last-Modified', stats.mtime.toUTCString());
     }
 
     // Cache-Control
     if (cacheControl && toString.call(cacheControl) === '[object String]') {
       // Set Cache-Control
-      ctx.set('Cache-Control', cacheControl);
+      context.set('Cache-Control', cacheControl);
     }
   }
 
@@ -271,23 +270,20 @@ export default class Send {
    * @returns {Promise<true>}
    */
   private read(path: string, range: Range, buffer: PassThrough, end: boolean): Promise<true> {
-    type Resolve = (value: true) => void;
-    type Reject = (reason: NodeJS.ErrnoException) => void;
-
-    return new Promise((resolve: Resolve, reject: Reject): void => {
+    return new Promise((resolve, reject): void => {
       // Create file stream
-      const file: ReadStream = fs.createReadStream(path, range);
+      const file = fs.createReadStream(path, range);
 
       // File read stream open
       if (range.prefix) {
-        file.once('open', (): void => {
+        file.once('open', () => {
           // Write prefix boundary
           buffer.write(range.prefix);
         });
       }
 
       // File read stream error
-      file.once('error', (error: NodeJS.ErrnoException): void => {
+      file.once('error', error => {
         // Unpipe
         file.unpipe(buffer);
         // Destroy file stream
@@ -298,14 +294,14 @@ export default class Send {
 
       // File read stream end
       if (range.suffix) {
-        file.once('end', (): void => {
+        file.once('end', () => {
           // Push suffix boundary
           buffer.write(range.suffix);
         });
       }
 
       // File read stream close
-      file.once('close', (): void => {
+      file.once('close', () => {
         // Unpipe
         file.unpipe(buffer);
         // Destroy file stream
@@ -321,18 +317,19 @@ export default class Send {
 
   /**
    * @method send
+   * @param {Context} context
    * @param {string} path
    * @param {Range[]} ranges
    */
-  private async send(path: string, ranges: Range[]): Promise<void> {
+  private async send(context: Context, path: string, ranges: Range[]): Promise<void> {
     // Ranges count
-    let count: number = ranges.length;
+    let count = ranges.length;
 
     // Set stream body, highWaterMark 64kb
-    const stream: PassThrough = new PassThrough({ highWaterMark: 65536 });
+    const stream = new PassThrough({ highWaterMark: 65536 });
 
     // Set response body
-    this.ctx.body = stream;
+    context.body = stream;
 
     // Read file ranges
     try {
@@ -347,19 +344,24 @@ export default class Send {
 
   /**
    * @method response
+   * @param {Context} context
    * @returns {Promise<boolean>}
    */
-  public async response(): Promise<boolean> {
-    const { ctx, root, path }: Send = this;
+  public async response(context: Context): Promise<boolean> {
+    const { root } = this;
 
     // Only support GET and HEAD (405)
-    if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
+    if (context.method !== 'GET' && context.method !== 'HEAD') {
       return false;
     }
 
+    // Get path of file
+    const pathname = decodeURI(context.path);
+    const path = pathname === -1 ? pathname : unixify(join(root, pathname));
+
     // Path -1 or null byte(s)
     if (path === -1 || path.includes('\0')) {
-      return ctx.throw(400);
+      return context.throw(400);
     }
 
     // Malicious path (403)
@@ -399,55 +401,55 @@ export default class Send {
     }
 
     // Setup headers
-    this.setupHeaders(path, stats);
+    this.setupHeaders(context, path, stats);
 
     // Conditional get support
-    if (this.isConditionalGET()) {
+    if (this.isConditionalGET(context)) {
       // Request precondition failure
-      if (this.isPreconditionFailure()) {
-        return ctx.throw(412);
+      if (this.isPreconditionFailure(context)) {
+        return context.throw(412);
       }
 
       // Request fresh (304)
-      if (ctx.fresh) {
+      if (context.fresh) {
         // Set status
-        ctx.status = 304;
+        context.status = 304;
         // Set body null
-        ctx.body = null;
+        context.body = null;
 
         return true;
       }
     }
 
     // Head request
-    if (ctx.method === 'HEAD') {
+    if (context.method === 'HEAD') {
       // Set content-length
-      ctx.length = stats.size;
+      context.length = stats.size;
       // Set body null
-      ctx.body = null;
+      context.body = null;
 
       return true;
     }
 
     // Parse ranges
-    const ranges: Ranges = this.parseRange(stats);
+    const ranges = this.parseRange(context, stats);
 
     // 416
     if (ranges === -1) {
       // Set content-range
-      ctx.set('Content-Range', `bytes */${stats.size}`);
+      context.set('Content-Range', `bytes */${stats.size}`);
 
       // Unsatisfiable 416
-      return ctx.throw(416);
+      return context.throw(416);
     }
 
     // 400
     if (ranges === -2) {
-      return ctx.throw(400);
+      return context.throw(400);
     }
 
     // Send file
-    this.send(path, ranges);
+    this.send(context, path, ranges);
 
     return true;
   }

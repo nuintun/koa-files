@@ -7,7 +7,7 @@
 import fs, { Stats } from 'fs';
 import { isAbsolute, relative } from 'path';
 
-const CHARS: string[] = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
+const CHARS = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz');
 
 /**
  * @function isOutRoot
@@ -52,10 +52,10 @@ export function decodeURI(URI: string): string | -1 {
  * @returns {string}
  */
 export function boundaryGenerator(): string {
-  let boundary: string = '';
+  let boundary = '';
 
   // Create boundary
-  for (let i: number = 0; i < 38; i++) {
+  for (let i = 0; i < 38; i++) {
     boundary += CHARS[Math.floor(Math.random() * 62)];
   }
 
@@ -69,7 +69,7 @@ export function boundaryGenerator(): string {
  * @returns {Promise<Stats>}
  */
 export function fstat(path: string): Promise<Stats> {
-  return new Promise<Stats>((resolve, reject): void => {
+  return new Promise((resolve, reject): void => {
     fs.stat(path, (error, stats): void => {
       error ? reject(error) : resolve(stats);
     });
@@ -90,13 +90,13 @@ export function hasTrailingSlash(path: string): boolean {
  * @description Parse a HTTP tokens.
  * @param {string[]} value
  */
-function parseTokens(value: string): string[] {
-  let start: number = 0;
-  let end: number = 0;
+export function parseTokens(value: string): string[] {
+  let end = 0;
+  let start = 0;
   let tokens: string[] = [];
 
   // gather tokens
-  for (let i: number = 0, length: number = value.length; i < length; i++) {
+  for (let i = 0, length = value.length; i < length; i++) {
     switch (value.charCodeAt(i)) {
       case 0x20:
         // ' '
@@ -128,7 +128,7 @@ function parseTokens(value: string): string[] {
  * @returns {boolean}
  */
 export function isETagFresh(match: string, etag: string): boolean {
-  return parseTokens(match).some((match: string): boolean => {
+  return parseTokens(match).some(match => {
     return match === etag || match === 'W/' + etag || 'W/' + match === etag;
   });
 }

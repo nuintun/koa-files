@@ -16,17 +16,19 @@ export interface Options extends SendOptions {
  * @param {string} root
  * @param {Options} options
  */
-export default function server(root: string, options: Options = {}): Middleware {
-  if (options.defer) {
-    return async (ctx: Context, next: Next): Promise<void> => {
+export default function server(root: string, options?: Options): Middleware {
+  const send = new Send(root, options);
+
+  if (options && options.defer) {
+    return async (context: Context, next: Next): Promise<void> => {
       await next();
-      await new Send(ctx, root, options).response();
+      await send.response(context);
     };
   }
 
-  return async (ctx: Context, next: Next): Promise<void> => {
-    const respond: boolean = await new Send(ctx, root, options).response();
-
-    !respond && (await next());
+  return async (context: Context, next: Next): Promise<void> => {
+    if (!(await send.response(context))) {
+      await next();
+    }
   };
 }
