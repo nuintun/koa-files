@@ -431,7 +431,7 @@ export default class Send {
       return true;
     }
 
-    // Parse ranges
+    // Parsed ranges
     const ranges = this.parseRange(context, stats);
 
     // 416
