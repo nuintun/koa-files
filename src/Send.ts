@@ -43,10 +43,8 @@ export default class Send {
    * @param {Options} options
    */
   constructor(root: string, options: Options = {}) {
-    const { cacheControl } = options;
-
+    this.options = options;
     this.root = unixify(resolve(root));
-    this.options = { ...options, cacheControl };
   }
 
   /**
