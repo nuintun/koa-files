@@ -15,18 +15,6 @@
     "esm",
     "types"
   ],
-  "scripts": {
-    "test": "node tests",
-    "lint": "tsc --noEmit",
-    "clean": "node tools/clean.js",
-    "format": "prettier --write .",
-    "prepublishOnly": "npm run build",
-    "build:cjs": "rollup -c tools/rollup.cjs.js",
-    "build:esm": "rollup -c tools/rollup.esm.js",
-    "build": "npm run clean && npm run build:main && npm run format",
-    "build:main": "npm run build:cjs && npm run build:esm && npm run build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir types"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nuintun/koa-files.git"
@@ -52,8 +40,17 @@
     "url": "https://github.com/nuintun/koa-files/issues"
   },
   "homepage": "https://github.com/nuintun/koa-files#readme",
-  "peerDependencies": {
-    "koa": "^2.0.0"
+  "scripts": {
+    "test": "node tests",
+    "lint": "tsc --noEmit",
+    "clean": "node tools/clean.js",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build",
+    "build:cjs": "rollup -c tools/rollup.cjs.js",
+    "build:esm": "rollup -c tools/rollup.esm.js",
+    "build": "npm run clean && npm run build:main && npm run format",
+    "build:main": "npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir types"
   },
   "dependencies": {
     "destroy": "^1.2.0",
@@ -73,5 +70,8 @@
     "rimraf": "^4.4.0",
     "rollup": "^3.20.0",
     "typescript": "^5.0.2"
+  },
+  "peerDependencies": {
+    "koa": "^2.0.0"
   }
 }
