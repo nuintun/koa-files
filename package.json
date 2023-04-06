@@ -59,17 +59,17 @@
     "tslib": "^2.5.0"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.0.0",
+    "@rollup/plugin-typescript": "^11.1.0",
     "@types/destroy": "^1.0.0",
     "@types/etag": "^1.8.1",
-    "@types/koa": "^2.13.5",
+    "@types/koa": "^2.13.6",
     "@types/range-parser": "^1.2.4",
     "koa": "^2.14.1",
     "magic-string": "^0.30.0",
     "prettier": "^2.8.7",
     "rimraf": "^4.4.1",
     "rollup": "^3.20.2",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.3"
   },
   "peerDependencies": {
     "koa": "^2.0.0"
