@@ -20,7 +20,7 @@ const banner = `/**
 
 /**
  * @function rollup
- * @param esnext
+ * @param {boolean} [esnext]
  * @return {import('rollup').RollupOptions}
  */
 export default function rollup(esnext) {
