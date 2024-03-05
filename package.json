@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -57,20 +57,20 @@
     "destroy": "^1.2.0",
     "etag": "^1.8.1",
     "range-parser": "^1.2.1",
-    "tslib": "^2.5.2"
+    "tslib": "^2.6.2"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.1.1",
-    "@types/destroy": "^1.0.0",
-    "@types/etag": "^1.8.1",
-    "@types/koa": "^2.13.6",
-    "@types/range-parser": "^1.2.4",
-    "koa": "^2.14.2",
-    "magic-string": "^0.30.0",
-    "prettier": "^2.8.8",
-    "rimraf": "^5.0.1",
-    "rollup": "^3.23.0",
-    "typescript": "^5.0.4"
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/destroy": "^1.0.3",
+    "@types/etag": "^1.8.3",
+    "@types/koa": "^2.15.0",
+    "@types/range-parser": "^1.2.7",
+    "koa": "^2.15.0",
+    "magic-string": "^0.30.8",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.12.0",
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "koa": "^2.0.0"
