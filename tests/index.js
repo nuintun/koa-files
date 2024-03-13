@@ -7,7 +7,7 @@
 'use strict';
 
 import Koa from 'koa';
-import server from '../esm/index.js';
+import server from 'koa-files';
 
 const app = new Koa();
 const port = +process.env.PORT || 80;
