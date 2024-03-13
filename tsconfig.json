@@ -13,7 +13,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "Node",
     "noUnusedParameters": true,
-    "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
