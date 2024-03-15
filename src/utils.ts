@@ -11,10 +11,9 @@ const CHARS = Array.from('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr
 
 /**
  * @function isOutRoot
- * @description Test path is out of bound of root
- * @param {string} path
- * @param {string} root
- * @returns {boolean}
+ * @description Check if path is out of root
+ * @param path The path to check
+ * @param root The root path
  */
 export function isOutRoot(path: string, root: string): boolean {
   path = relative(root, path);
@@ -24,9 +23,8 @@ export function isOutRoot(path: string, root: string): boolean {
 
 /**
  * @function unixify
- * @description Convert path separators to posix/unix-style forward slashes
- * @param {string} path
- * @returns {string}
+ * @description Convert path to unix style
+ * @param path The path to convert
  */
 export function unixify(path: string): string {
   return path.replace(/\\/g, '/');
@@ -34,9 +32,8 @@ export function unixify(path: string): string {
 
 /**
  * @function decodeURI
- * @description Decode URI component.
- * @param {string} URI
- * @returns {string|-1}
+ * @description Decode URI component
+ * @param URI The URI to decode
  */
 export function decodeURI(URI: string): string | -1 {
   try {
@@ -48,8 +45,7 @@ export function decodeURI(URI: string): string | -1 {
 
 /**
  * @function boundaryGenerator
- * @description Create boundary
- * @returns {string}
+ * @description Generate a boundary
  */
 export function boundaryGenerator(): string {
   let boundary = '';
@@ -65,8 +61,8 @@ export function boundaryGenerator(): string {
 
 /**
  * @function fstat
- * @param {string} path
- * @returns {Promise<Stats>}
+ * @description Get file stats
+ * @param path The file path
  */
 export function fstat(path: string): Promise<Stats> {
   return new Promise((resolve, reject): void => {
@@ -78,8 +74,8 @@ export function fstat(path: string): Promise<Stats> {
 
 /**
  * @function hasTrailingSlash
- * @param {string} path
- * @returns {boolean}
+ * @description Check if path has trailing slash
+ * @param path The path to check
  */
 export function hasTrailingSlash(path: string): boolean {
   return /\/$/.test(path);
@@ -87,8 +83,8 @@ export function hasTrailingSlash(path: string): boolean {
 
 /**
  * @function parseTokens
- * @description Parse a HTTP tokens.
- * @param {string[]} value
+ * @description Parse HTTP tokens
+ * @param value The tokens value string
  */
 export function parseTokens(value: string): string[] {
   let end = 0;
@@ -122,22 +118,22 @@ export function parseTokens(value: string): string[] {
 }
 
 /**
+ * @function isETag
+ * @description Check if etag is valid
+ * @param value The value to check
+ */
+export function isETag(value: string): boolean {
+  return /^(?:W\/)?"[^"]+"$/.test(value);
+}
+
+/**
  * @function isETagFresh
- * @param {string} match
- * @param {string} etag
- * @returns {boolean}
+ * @description Check if etag is fresh
+ * @param match The match value
+ * @param etag The etag value
  */
 export function isETagFresh(match: string, etag: string): boolean {
   return parseTokens(match).some(match => {
     return match === etag || match === 'W/' + etag || 'W/' + match === etag;
   });
-}
-
-/**
- * @function isETag
- * @param {string} etag
- * @returns {boolean}
- */
-export function isETag(etag: string): boolean {
-  return /(?:W\/)?"(?:[ !#-\x7E\x80-\xFF]*|\r\n[\t ]|\\.)*"/.test(etag);
 }

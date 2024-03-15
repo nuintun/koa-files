@@ -39,8 +39,9 @@ export default class Files {
 
   /**
    * @constructor
-   * @param {string} root
-   * @param {Options} options
+   * @description Create files service
+   * @param root Files service root
+   * @param options Files service options
    */
   constructor(root: string, options: Options = {}) {
     this.options = options;
@@ -48,9 +49,10 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method isConditionalGET
-   * @param {Context} context
-   * @returns {boolean}
+   * @description Check if request is conditional GET
+   * @param context Koa context
    */
   private isConditionalGET(context: Context): boolean {
     const { request } = context;
@@ -64,9 +66,10 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method isPreconditionFailure
-   * @param {Context} context
-   * @returns {boolean}
+   * @description Check if request precondition failure
+   * @param context Koa context
    */
   private isPreconditionFailure(context: Context): boolean {
     const { request, response } = context;
@@ -93,9 +96,10 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method isRangeFresh
-   * @param {Context} context
-   * @returns {boolean}
+   * @description Check if request range fresh
+   * @param context Koa context
    */
   private isRangeFresh(context: Context): boolean {
     const { request, response } = context;
@@ -120,9 +124,10 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method isIgnore
-   * @param {string} path
-   * @returns {boolean}
+   * @description Check if path is ignore
+   * @param path File path
    */
   private isIgnore(path: string): boolean {
     const { ignore } = this.options;
@@ -131,10 +136,11 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method parseRange
-   * @param {Context} context
-   * @param {Stats} stats
-   * @returns {Ranges}
+   * @description Parse range
+   * @param context Koa context
+   * @param stats File stats
    */
   private parseRange(context: Context, stats: Stats): Ranges {
     const { size } = stats;
@@ -218,10 +224,12 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method setupHeaders
-   * @param {Context} context
-   * @param {string} path
-   * @param {Stats} stats
+   * @description Setup headers
+   * @param context Koa context
+   * @param path File path
+   * @param stats File stats
    */
   private setupHeaders(context: Context, path: string, stats: Stats): void {
     const { options } = this;
@@ -260,12 +268,13 @@ export default class Files {
   }
 
   /**
+   * @private
    * @method read
-   * @param {string} path
-   * @param {Range} range
-   * @param {PassThrough} buffer
-   * @param {boolean} end
-   * @returns {Promise<true>}
+   * @description Read file
+   * @param path File path
+   * @param range Read range
+   * @param buffer Destination stream
+   * @param end Is destory destination stream after read
    */
   private read(path: string, range: Range, buffer: PassThrough, end: boolean): Promise<true> {
     return new Promise((resolve, reject): void => {
@@ -314,9 +323,39 @@ export default class Files {
   }
 
   /**
+   * @private
+   * @method send
+   * @description Send file
+   * @param context Koa context
+   * @param path File path
+   * @param ranges Read ranges
+   */
+  private async send(context: Context, path: string, ranges: Range[]): Promise<void> {
+    // Ranges length
+    let { length } = ranges;
+
+    // Set stream body, highWaterMark 64kb
+    const stream = new PassThrough({ highWaterMark: 65536 });
+
+    // Set response body
+    context.body = stream;
+
+    // Read file ranges
+    try {
+      for (const range of ranges) {
+        await this.read(path, range, stream, --length === 0);
+      }
+    } catch (error) {
+      // End stream when read exception
+      stream.end();
+    }
+  }
+
+  /**
+   * @public
    * @method response
-   * @param {Context} context
-   * @returns {Promise<boolean>}
+   * @description Response to koa context
+   * @param context Koa context
    */
   public async response(context: Context): Promise<boolean> {
     const { root } = this;
@@ -419,24 +458,8 @@ export default class Files {
       return context.throw(400);
     }
 
-    // Ranges length
-    let { length } = ranges;
-
-    // Set stream body, highWaterMark 64kb
-    const stream = new PassThrough({ highWaterMark: 65536 });
-
-    // Set response body
-    context.body = stream;
-
-    // Read file ranges
-    try {
-      for (const range of ranges) {
-        await this.read(path, range, stream, --length === 0);
-      }
-    } catch (error) {
-      // End stream when read exception
-      stream.end();
-    }
+    // Send file
+    this.send(context, path, ranges);
 
     return true;
   }
