@@ -65,7 +65,7 @@
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
     "@types/range-parser": "^1.2.7",
-    "koa": "^2.15.0",
+    "koa": "^2.15.1",
     "magic-string": "^0.30.8",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
