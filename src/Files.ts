@@ -1,5 +1,5 @@
 /**
- * @module Send
+ * @module Files
  * @license MIT
  * @author nuintun
  */
@@ -31,9 +31,9 @@ interface Range {
 type Ranges = Range[] | -1 | -2;
 
 /**
- * @class Send
+ * @class Files
  */
-export default class Send {
+export default class Files {
   private root: string;
   private options: Options;
 
@@ -314,33 +314,6 @@ export default class Send {
   }
 
   /**
-   * @method send
-   * @param {Context} context
-   * @param {string} path
-   * @param {Range[]} ranges
-   */
-  private async send(context: Context, path: string, ranges: Range[]): Promise<void> {
-    // Ranges count
-    let count = ranges.length;
-
-    // Set stream body, highWaterMark 64kb
-    const stream = new PassThrough({ highWaterMark: 65536 });
-
-    // Set response body
-    context.body = stream;
-
-    // Read file ranges
-    try {
-      for (const range of ranges) {
-        await this.read(path, range, stream, --count === 0);
-      }
-    } catch (error) {
-      // End stream when read exception
-      stream.end();
-    }
-  }
-
-  /**
    * @method response
    * @param {Context} context
    * @returns {Promise<boolean>}
@@ -446,8 +419,24 @@ export default class Send {
       return context.throw(400);
     }
 
-    // Send file
-    this.send(context, path, ranges);
+    // Ranges length
+    let { length } = ranges;
+
+    // Set stream body, highWaterMark 64kb
+    const stream = new PassThrough({ highWaterMark: 65536 });
+
+    // Set response body
+    context.body = stream;
+
+    // Read file ranges
+    try {
+      for (const range of ranges) {
+        await this.read(path, range, stream, --length === 0);
+      }
+    } catch (error) {
+      // End stream when read exception
+      stream.end();
+    }
 
     return true;
   }

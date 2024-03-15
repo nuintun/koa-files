@@ -5,9 +5,9 @@
  */
 
 import { Context, Middleware, Next } from 'koa';
-import Send, { Options as SendOptions } from './Send';
+import Files, { Options as FilesOptions } from './Files';
 
-export interface Options extends SendOptions {
+export interface Options extends FilesOptions {
   defer?: boolean;
 }
 
@@ -17,17 +17,17 @@ export interface Options extends SendOptions {
  * @param {Options} options
  */
 export default function server(root: string, options?: Options): Middleware {
-  const send = new Send(root, options);
+  const files = new Files(root, options);
 
   if (options && options.defer) {
     return async (context: Context, next: Next): Promise<void> => {
       await next();
-      await send.response(context);
+      await files.response(context);
     };
   }
 
   return async (context: Context, next: Next): Promise<void> => {
-    if (!(await send.response(context))) {
+    if (!(await files.response(context))) {
       await next();
     }
   };

@@ -5,7 +5,7 @@
 >
 > [![NPM Version][npm-image]][npm-url]
 > [![Download Status][download-image]][npm-url]
-> [![Snyk Vulnerabilities][snyk-image]][snyk-url]
+> [![Languages Status][languages-image]][github-url]
 > ![Node Version][node-image]
 
 ## Installation
@@ -17,13 +17,13 @@ $ npm install koa-files
 ## API
 
 ```js
-const Koa = require('koa');
-const server = require('koa-files');
+import Koa from 'koa';
+import files from 'koa-files';
 
 const app = new Koa();
 
 // Static files server
-app.use(server(root, options));
+app.use(files(root, options));
 ```
 
 - `root` root directory string. nothing above this root directory can be served.
@@ -66,8 +66,8 @@ app.use(server(root, options));
 
 'use strict';
 
-const Koa = require('koa');
-const server = require('koa-files');
+import Koa from 'koa';
+import files from 'koa-files';
 
 const app = new Koa();
 const port = process.env.PORT || 80;
@@ -82,7 +82,7 @@ function httpError(error) {
 }
 
 // Static files server
-app.use(server('tests', { cacheControl: 'public, max-age=31557600' }));
+app.use(files('tests', { cacheControl: 'public, max-age=31557600' }));
 
 // Listen error event
 app.on('error', error => !httpError(error) && console.error(error));
@@ -102,6 +102,6 @@ MIT
 [npm-image]: https://img.shields.io/npm/v/koa-files.svg?style=flat-square
 [npm-url]: https://www.npmjs.org/package/koa-files
 [download-image]: https://img.shields.io/npm/dm/koa-files.svg?style=flat-square
-[snyk-image]: https://img.shields.io/snyk/vulnerabilities/github/nuintun/koa-files.svg?style=flat-square
-[snyk-url]: https://snyk.io/test/github/nuintun/koa-files
+[languages-image]: https://img.shields.io/github/languages/top/nuintun/koa-files?style=flat-square
+[github-url]: https://github.com/nuintun/koa-files
 [node-image]: https://img.shields.io/node/v/koa-files.svg?style=flat-square
