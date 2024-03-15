@@ -4,10 +4,8 @@
  * @author nuintun
  */
 
-'use strict';
-
 import Koa from 'koa';
-import server from 'koa-files';
+import files from 'koa-files';
 
 const app = new Koa();
 const port = +process.env.PORT || 80;
@@ -22,7 +20,7 @@ function httpError(error) {
 }
 
 // Static files server
-app.use(server('tests', { cacheControl: 'public, max-age=31557600' }));
+app.use(files('tests', { cacheControl: 'public, max-age=31557600' }));
 
 // Listen error event
 app.on('error', error => !httpError(error) && console.error(error));

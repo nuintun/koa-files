@@ -64,8 +64,6 @@ app.use(files(root, options));
  * @author nuintun
  */
 
-'use strict';
-
 import Koa from 'koa';
 import files from 'koa-files';
 
