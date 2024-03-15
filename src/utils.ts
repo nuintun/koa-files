@@ -123,7 +123,7 @@ export function parseTokens(value: string): string[] {
  * @param value The value to check
  */
 export function isETag(value: string): boolean {
-  return /^(?:W\/)?"[^"]+"$/.test(value);
+  return /^(?:W\/)?"[\s\S]+"$/.test(value);
 }
 
 /**
