@@ -31,13 +31,17 @@ app.use(files(root, options));
 
 ### Options
 
+#### fs?: `{ readonly stat: typeof fs.stat, readonly createReadStream: typeof createReadStream }`
+
+- The fs module to use. Defaults to use `fs` of node.
+
+#### headers?: `{ [key: string]: string | string[] } | (path: string, stats: fs.Stats): { [key: string]: string | string[] } | void>`
+
+- Set headers to be sent. Defaults to `undefined`, see docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+
 #### acceptRanges?: `boolean`
 
 - Enable or disable accepting ranged requests. Disabling this will not send Accept-Ranges and ignore the contents of the Range request header. defaults to `true`.
-
-#### cacheControl?: `string`
-
-- Set Cache-Control response header, defaults to `undefined`, see docs: [Cache-Control in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
 
 #### etag?: `boolean`
 
@@ -70,6 +74,15 @@ import files from 'koa-files';
 const app = new Koa();
 const port = process.env.PORT || 80;
 
+// Static files server
+app.use(
+  files('tests', {
+    headers: {
+      'Cache-Control': 'public, max-age=31557600'
+    }
+  })
+);
+
 /**
  * @function httpError
  * @param {NodeJS.ErrnoException} error
@@ -79,14 +92,15 @@ function httpError(error) {
   return /^(EOF|EPIPE|ECANCELED|ECONNRESET|ECONNABORTED)$/i.test(error.code);
 }
 
-// Static files server
-app.use(files('tests', { cacheControl: 'public, max-age=31557600' }));
-
 // Listen error event
-app.on('error', error => !httpError(error) && console.error(error));
+app.on('error', error => {
+  !httpError(error) && console.error(error);
+});
 
 // Start server
-app.listen(port, () => console.log(`> server running at: 127.0.0.1:${port}`));
+app.listen(port, () => {
+  console.log(`> server running at: 127.0.0.1:${port}`);
+});
 ```
 
 ## Features

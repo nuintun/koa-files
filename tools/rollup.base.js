@@ -44,6 +44,6 @@ export default function rollup(esnext) {
         warn(error);
       }
     },
-    external: ['fs', 'path', 'etag', 'tslib', 'stream', 'destroy', 'range-parser']
+    external: ['fs', 'etag', 'path', 'tslib', 'crypto', 'stream', 'destroy', 'range-parser']
   };
 }

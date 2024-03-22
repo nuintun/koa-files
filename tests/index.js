@@ -20,7 +20,13 @@ function httpError(error) {
 }
 
 // Static files server
-app.use(files('tests', { cacheControl: 'public, max-age=31557600' }));
+app.use(
+  files('tests', {
+    headers: {
+      'Cache-Control': 'public, max-age=31557600'
+    }
+  })
+);
 
 // Listen error event
 app.on('error', error => !httpError(error) && console.error(error));
