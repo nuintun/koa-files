@@ -17,45 +17,70 @@ $ npm install koa-files
 ## API
 
 ```ts
-import Koa from 'koa';
-import files from 'koa-files';
+import { Middleware } from 'koa';
+import { createReadStream, stat, Stats } from 'fs';
 
-const app = new Koa();
+interface IgnoreFunction {
+  (path: string): boolean;
+}
 
-// Static files server
-app.use(files(root, options));
+interface Headers {
+  [key: string]: string | string[];
+}
+
+interface HeaderFunction {
+  (path: string, stats: Stats): Headers | void;
+}
+
+interface FileSystem {
+  readonly stat: typeof stat;
+  readonly createReadStream: typeof createReadStream;
+}
+
+export interface Options {
+  etag?: boolean;
+  defer?: boolean;
+  fs?: FileSystem;
+  acceptRanges?: boolean;
+  lastModified?: boolean;
+  ignore?: IgnoreFunction;
+  headers?: Headers | HeaderFunction;
+}
+
+export default function server(root: string, options?: Options): Middleware;
 ```
 
-- `root` root directory string. nothing above this root directory can be served.
-- `options` options object.
+### root
+
+- Root directory string. nothing above this root directory can be served.
 
 ### Options
 
-#### fs?: `{ readonly stat: typeof fs.stat, readonly createReadStream: typeof createReadStream }`
+##### `fs`
 
 - The fs module to use, defaults to use `fs` of node.
 
-#### headers?: `{ [key: string]: string | string[] } | (path: string, stats: fs.Stats): { [key: string]: string | string[] } | void>`
+##### `headers`
 
 - Set headers to be sent, defaults to `undefined`, see docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 
-#### acceptRanges?: `boolean`
+##### `acceptRanges`
 
 - Enable or disable accepting ranged requests, disabling this will not send Accept-Ranges and ignore the contents of the Range request header, defaults to `true`.
 
-#### etag?: `boolean`
+##### `etag`
 
 - Enable or disable etag generation, defaults to `true`.
 
-#### lastModified?: `boolean`
+##### `lastModified`
 
 - Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value. defaults to `true`.
 
-#### ignore?: `(path: string) => boolean`
+##### `ignore`
 
 - Set ignore rules. defaults to `undefined`.
 
-#### defer?: `boolean`
+##### `defer`
 
 - If true, serves after `await next()`, allowing any downstream middleware to respond first. defaults to `false`.
 
