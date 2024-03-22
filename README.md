@@ -16,7 +16,7 @@ $ npm install koa-files
 
 ## API
 
-```js
+```ts
 import Koa from 'koa';
 import files from 'koa-files';
 
@@ -61,7 +61,7 @@ app.use(files(root, options));
 
 ## Example
 
-```js
+```ts
 /**
  * @module server
  * @license MIT
