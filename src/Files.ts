@@ -139,6 +139,18 @@ export default class Files {
 
   /**
    * @private
+   * @method isIgnore
+   * @description Check if path is ignore.
+   * @param path File path.
+   */
+  private isIgnore(path: string): boolean {
+    const { ignore } = this.options;
+
+    return (typeof ignore === 'function' ? ignore(path) : false) === true;
+  }
+
+  /**
+   * @private
    * @method parseRange
    * @description Parse range.
    * @param context Koa context.
@@ -402,6 +414,11 @@ export default class Files {
 
     // Malicious path (403).
     if (isOutRoot(path, root)) {
+      return false;
+    }
+
+    // Is ignore path or file (403).
+    if (this.isIgnore(path)) {
       return false;
     }
 
