@@ -303,14 +303,14 @@ export default class Files {
 
   /**
    * @private
-   * @method readTo
-   * @description Read file.
+   * @method write
+   * @description Write file to stream.
    * @param stream Destination stream.
-   * @param path File path.
-   * @param range Read range.
-   * @param end Is destory destination stream after read.
+   * @param path The file path to read.
+   * @param range The range to read.
+   * @param end Is destory destination stream after read complete.
    */
-  private readTo(stream: PassThrough, path: string, range: Range, end: boolean): Promise<true> {
+  private write(stream: PassThrough, path: string, range: Range, end: boolean): Promise<true> {
     const { fs } = this.options;
 
     return new Promise((resolve, reject): void => {
@@ -381,7 +381,7 @@ export default class Files {
     // Read file ranges.
     try {
       for (const range of ranges) {
-        await this.readTo(stream, path, range, --length === 0);
+        await this.write(stream, path, range, --length === 0);
       }
     } catch {
       // End stream when read exception.
