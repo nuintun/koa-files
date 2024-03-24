@@ -380,7 +380,7 @@ export default class Files {
     // Ranges length.
     let { length } = ranges;
 
-    // Read file ranges.
+    // Write ranges to stream.
     try {
       for (const range of ranges) {
         await this.write(stream, path, range, --length === 0);
