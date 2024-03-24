@@ -314,42 +314,44 @@ export default class Files {
     const { fs } = this.options;
 
     return new Promise((resolve, reject): void => {
+      // Range prefix and suffix.
+      const { prefix, suffix } = range;
       // Create file stream.
       const file = fs.createReadStream(path, range);
 
       // File read stream open.
-      if (range.prefix) {
+      if (prefix) {
         file.once('open', () => {
           // Write prefix boundary.
-          stream.write(range.prefix);
+          stream.write(prefix);
+        });
+      }
+
+      // File read stream end.
+      if (suffix) {
+        file.once('end', () => {
+          // Push suffix boundary.
+          stream.write(suffix);
         });
       }
 
       // File read stream error.
       file.once('error', error => {
-        // Unpipe.
-        file.unpipe(stream);
         // Reject.
         reject(error);
-        // Destroy file stream.
+        // Unpipe.
+        file.unpipe();
+        // Destroy.
         destroy(file);
       });
 
-      // File read stream end.
-      if (range.suffix) {
-        file.once('end', () => {
-          // Push suffix boundary.
-          stream.write(range.suffix);
-        });
-      }
-
       // File read stream close.
       file.once('close', () => {
-        // Unpipe.
-        file.unpipe(stream);
         // Resolve.
         resolve(true);
-        // Destroy file stream.
+        // Unpipe.
+        file.unpipe();
+        // Destroy.
         destroy(file);
       });
 
