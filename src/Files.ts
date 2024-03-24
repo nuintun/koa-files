@@ -467,6 +467,7 @@ export default class Files {
         // Set body null.
         context.body = null;
 
+        // File found.
         return true;
       }
     }
@@ -478,6 +479,7 @@ export default class Files {
       // Set body null
       context.body = null;
 
+      // File found.
       return true;
     }
 
@@ -501,6 +503,7 @@ export default class Files {
     // Send file.
     this.send(context, path, ranges);
 
+    // File found.
     return true;
   }
 }
