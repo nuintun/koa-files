@@ -17,12 +17,11 @@ export interface Options extends Omit<FilesOptions, 'fs'> {
  * @param {string} root
  * @param {Options} options
  */
-export default function server(root: string, options: Options = {}): Middleware {
-  options.fs = options.fs || fs;
+export default function server(root: string, options?: Options): Middleware {
+  const config = { fs, ...options };
+  const files = new Files(root, config);
 
-  const files = new Files(root, options as FilesOptions);
-
-  if (options && options.defer) {
+  if (config.defer) {
     return async (context, next) => {
       await next();
       await files.response(context);

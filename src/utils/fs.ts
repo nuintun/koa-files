@@ -14,10 +14,10 @@ export interface FileSystem {
  * @description Get file stats.
  * @param path The file path.
  */
-export function fstat(fs: FileSystem, path: string): Promise<Stats> {
-  return new Promise((resolve, reject): void => {
+export function fstat(fs: FileSystem, path: string): Promise<Stats | null> {
+  return new Promise((resolve): void => {
     fs.stat(path, (error, stats): void => {
-      error ? reject(error) : resolve(stats);
+      resolve(error != null ? null : stats);
     });
   });
 }
