@@ -2,12 +2,9 @@
  * @module fs
  */
 
-import { createReadStream, stat, Stats } from 'fs';
+import { ReadStream, Stats } from 'fs';
 
-export interface FileSystem {
-  readonly stat: typeof stat;
-  readonly createReadStream: typeof createReadStream;
-}
+type PathLike = string | Buffer | URL;
 
 /**
  * @function fstat
@@ -20,4 +17,9 @@ export function fstat(fs: FileSystem, path: string): Promise<Stats | null> {
       resolve(error != null ? null : stats);
     });
   });
+}
+
+export interface FileSystem {
+  stat(path: PathLike, callback: (error: Error | null, stats: Stats) => void): void;
+  createReadStream(path: PathLike, options?: { start?: number; end?: number }): ReadStream;
 }
