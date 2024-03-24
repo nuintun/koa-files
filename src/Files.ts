@@ -202,9 +202,9 @@ export default class Files {
             for (let index = 0; index < length; index++) {
               const { start, end } = parsed[index];
               // The first prefix boundary no \r\n.
-              const prefixHead = index > 0 ? '\r\n' : '';
+              const head = index > 0 ? '\r\n' : '';
               const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
-              const prefix = `${prefixHead}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+              const prefix = `${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
 
               // Compute Content-Length
               contentLength += end - start + 1 + Buffer.byteLength(prefix);
