@@ -310,10 +310,10 @@ export default class Files {
    * @param range The range to read.
    * @param end Is destory destination stream after read complete.
    */
-  private write(stream: PassThrough, path: string, range: Range, end: boolean): Promise<true> {
+  private write(stream: PassThrough, path: string, range: Range, end: boolean): Promise<boolean> {
     const { fs } = this.options;
 
-    return new Promise((resolve, reject): void => {
+    return new Promise((resolve): void => {
       // Range prefix and suffix.
       const { prefix, suffix } = range;
       // Create file stream.
@@ -336,23 +336,25 @@ export default class Files {
       }
 
       // File read stream error.
-      file.once('error', error => {
-        // Reject.
-        reject(error);
+      file.once('error', () => {
+        // End stream.
+        stream.end();
         // Unpipe.
         file.unpipe();
         // Destroy.
         destroy(file);
+        // Resolve.
+        resolve(false);
       });
 
       // File read stream close.
       file.once('close', () => {
-        // Resolve.
-        resolve(true);
         // Unpipe.
         file.unpipe();
         // Destroy.
         destroy(file);
+        // Resolve.
+        resolve(true);
       });
 
       // Write data to buffer.
@@ -381,13 +383,14 @@ export default class Files {
     let { length } = ranges;
 
     // Write ranges to stream.
-    try {
-      for (const range of ranges) {
-        await this.write(stream, path, range, --length === 0);
+    for (const range of ranges) {
+      // Write range.
+      const passed = await this.write(stream, path, range, --length === 0);
+
+      // If not passed, break.
+      if (!passed) {
+        break;
       }
-    } catch {
-      // End stream when read exception.
-      stream.end();
     }
   }
 
