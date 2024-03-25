@@ -11,6 +11,7 @@ import parseRange from 'range-parser';
 import { generate } from './utils/hash';
 import { extname, join, resolve } from 'path';
 import { FileSystem, fstat } from './utils/fs';
+import { isBoolean, isFunction } from './utils/typeof';
 import { decodeURI, isETag, isETagFresh } from './utils/http';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
 
@@ -36,12 +37,12 @@ interface HeaderFunction {
 }
 
 export interface Options {
-  etag?: boolean;
   fs: FileSystem;
   acceptRanges?: boolean;
   lastModified?: boolean;
   ignore?: IgnoreFunction;
   headers?: Headers | HeaderFunction;
+  etag?: boolean | { weak: boolean };
 }
 
 /**
@@ -146,7 +147,7 @@ export default class Files {
   private isIgnore(path: string): boolean {
     const { ignore } = this.options;
 
-    return (typeof ignore === 'function' ? ignore(path) : false) === true;
+    return (isFunction(ignore) ? ignore(path) : false) === true;
   }
 
   /**
@@ -255,17 +256,17 @@ export default class Files {
    */
   private setupHeaders(context: Context, path: string, stats: Stats): void {
     const { options } = this;
-    const { headers } = options;
+    const { headers, etag: etagOptions } = options;
 
     // Set status.
     context.status = 200;
 
     // Set headers.
-    if (headers != null) {
-      if (typeof headers === 'function') {
+    if (headers) {
+      if (isFunction(headers)) {
         const fields = headers(path, stats);
 
-        if (fields != null) {
+        if (fields) {
           context.set(fields);
         }
       } else {
@@ -277,11 +278,15 @@ export default class Files {
     context.type = extname(path);
 
     // ETag.
-    if (options.etag === false) {
+    if (etagOptions === false) {
       context.remove('ETag');
     } else {
       // Set ETag.
-      context.set('ETag', etag(stats));
+      if (isBoolean(etagOptions)) {
+        context.set('ETag', etag(stats));
+      } else {
+        context.set('ETag', etag(stats, etagOptions));
+      }
     }
 
     // Accept-Ranges.
@@ -320,7 +325,7 @@ export default class Files {
       const file = fs.createReadStream(path, range);
 
       // File read stream open.
-      if (prefix != null) {
+      if (prefix) {
         file.once('open', () => {
           // Write prefix boundary.
           stream.write(prefix);
@@ -328,7 +333,7 @@ export default class Files {
       }
 
       // File read stream end.
-      if (suffix != null) {
+      if (suffix) {
         file.once('end', () => {
           // Push suffix boundary.
           stream.write(suffix);

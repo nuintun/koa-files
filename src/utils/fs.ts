@@ -14,7 +14,7 @@ type PathLike = string | Buffer | URL;
 export function fstat(fs: FileSystem, path: string): Promise<Stats | null> {
   return new Promise(resolve => {
     fs.stat(path, (error, stats) => {
-      resolve(error != null ? null : stats);
+      resolve(error ? null : stats);
     });
   });
 }
