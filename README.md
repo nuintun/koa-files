@@ -38,13 +38,13 @@ interface FileSystem {
 }
 
 export interface Options {
-  etag?: boolean;
   defer?: boolean;
   fs?: FileSystem;
   acceptRanges?: boolean;
   lastModified?: boolean;
   ignore?: IgnoreFunction;
   headers?: Headers | HeaderFunction;
+  etag?: boolean | { weak: boolean };
 }
 
 export default function server(root: string, options?: Options): Middleware;
@@ -70,7 +70,7 @@ export default function server(root: string, options?: Options): Middleware;
 
 ##### `etag`
 
-- Enable or disable etag generation, defaults to `true`.
+- Enable or disable etag generation, defaults to `true`, also can set `{ weak: false }` to generate strong etag.
 
 ##### `lastModified`
 
