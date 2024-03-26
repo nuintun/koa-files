@@ -252,12 +252,12 @@ export default class Files {
     return new Promise((resolve): void => {
       // Range prefix and suffix.
       const { prefix, suffix } = range;
-      // Create file stream.
-      const file = fs.createReadStream(path, range);
+      // Create file stream reader.
+      const reader = fs.createReadStream(path, range);
 
       // File read stream open.
       if (prefix) {
-        file.once('open', () => {
+        reader.once('open', () => {
           // Write prefix boundary.
           stream.write(prefix);
         });
@@ -265,36 +265,36 @@ export default class Files {
 
       // File read stream end.
       if (suffix) {
-        file.once('end', () => {
+        reader.once('end', () => {
           // Push suffix boundary.
           stream.write(suffix);
         });
       }
 
       // File read stream error.
-      file.once('error', () => {
+      reader.once('error', () => {
         // End stream.
         stream.end();
         // Unpipe.
-        file.unpipe();
+        reader.unpipe();
         // Destroy.
-        destroy(file);
+        destroy(reader);
         // Resolve.
         resolve(false);
       });
 
       // File read stream close.
-      file.once('close', () => {
+      reader.once('close', () => {
         // Unpipe.
-        file.unpipe();
+        reader.unpipe();
         // Destroy.
-        destroy(file);
+        destroy(reader);
         // Resolve.
         resolve(true);
       });
 
       // Write data to buffer.
-      file.pipe(stream, { end });
+      reader.pipe(stream, { end });
     });
   }
 
