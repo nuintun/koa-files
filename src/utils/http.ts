@@ -12,7 +12,7 @@ import { Context } from 'koa';
 export function decodeURI(URI: string): string | -1 {
   try {
     return decodeURIComponent(URI);
-  } catch (error) {
+  } catch {
     return -1;
   }
 }
@@ -27,7 +27,7 @@ export function parseTokens(value: string): string[] {
   let start = 0;
   let tokens: string[] = [];
 
-  // Gather tokens
+  // Gather tokens.
   for (let i = 0, length = value.length; i < length; i++) {
     switch (value.charCodeAt(i)) {
       case 0x20:
