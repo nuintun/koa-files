@@ -97,8 +97,8 @@ export default function server(root: string, options?: Options): Middleware;
 ##### `defer`
 
 - Defaults to `false`.
-- If true, serves after `await next()`,
-- allowing any downstream middleware to respond first.
+- If true, serves after `await next()`.
+- Allowing any downstream middleware to respond first.
 
 ## Example
 
