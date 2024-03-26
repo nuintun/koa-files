@@ -52,37 +52,52 @@ export default function server(root: string, options?: Options): Middleware;
 
 ### root
 
-- Root directory string. nothing above this root directory can be served.
+> Root directory string.
+> Nothing above this root directory can be served.
 
 ### Options
 
 ##### `fs`
 
-- The fs module to use, defaults to use `fs` of node.
+> The fs module to use.
+> Defaults to `node:fs`.
 
 ##### `headers`
 
-- Set headers to be sent, defaults to `undefined`, see docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+> Set headers to be sent.
+> See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+> Defaults to `undefined`.
 
 ##### `acceptRanges`
 
-- Enable or disable accepting ranged requests, disabling this will not send Accept-Ranges and ignore the contents of the Range request header, defaults to `true`.
+> Enable or disable accepting ranged requests.
+> Disabling this will not send Accept-Ranges and ignore the contents of the Range request header.
+> Can be overridden by the `headers`.
+> Defaults to `true`.
 
 ##### `etag`
 
-- Enable or disable etag generation, defaults to `true`, use stats weak etag default, you can set it to `false` and use headers set strong etag.
+> Enable or disable etag generation.
+> Can be overridden by the `headers`.
+> Defaults to `true`.
 
 ##### `lastModified`
 
-- Enable or disable Last-Modified header, defaults to true. Uses the file system's last modified value. defaults to `true`.
+> Enable or disable Last-Modified header.
+> Uses the file system's last modified value.
+> Can be overridden by the `headers`.
+> Defaults to `true`.
 
 ##### `ignore`
 
-- Set ignore rules. defaults to `undefined`.
+> Set ignore rules.
+> Defaults to `undefined`.
 
 ##### `defer`
 
-- If true, serves after `await next()`, allowing any downstream middleware to respond first. defaults to `false`.
+> If true, serves after `await next()`,
+> allowing any downstream middleware to respond first.
+> Defaults to `false`.
 
 ## Example
 

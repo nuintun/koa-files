@@ -85,6 +85,64 @@ export default class Files {
 
   /**
    * @private
+   * @method setupHeaders
+   * @description Setup headers
+   * @param context Koa context
+   * @param path File path
+   * @param stats File stats
+   */
+  private setupHeaders(context: Context, path: string, stats: Stats): void {
+    const { options } = this;
+    const { headers, etag } = options;
+
+    // Set status.
+    context.status = 200;
+
+    // Set Content-Type.
+    context.type = extname(path);
+
+    // Accept-Ranges.
+    if (options.acceptRanges === false) {
+      // Set Accept-Ranges to none tell client not support.
+      context.set('Accept-Ranges', 'none');
+    } else {
+      // Set Accept-Ranges.
+      context.set('Accept-Ranges', 'bytes');
+    }
+
+    // ETag.
+    if (etag === false) {
+      // Remove ETag.
+      context.remove('ETag');
+    } else {
+      context.set('ETag', createETag(stats));
+    }
+
+    // Last-Modified.
+    if (options.lastModified === false) {
+      // Remove Last-Modified.
+      context.remove('Last-Modified');
+    } else {
+      // Set mtime utc string.
+      context.set('Last-Modified', stats.mtime.toUTCString());
+    }
+
+    // Set headers.
+    if (headers) {
+      if (isFunction(headers)) {
+        const fields = headers(path, stats);
+
+        if (fields) {
+          context.set(fields);
+        }
+      } else {
+        context.set(headers);
+      }
+    }
+  }
+
+  /**
+   * @private
    * @method parseRange
    * @description Parse range.
    * @param context Koa context.
@@ -94,7 +152,7 @@ export default class Files {
     const { size } = stats;
 
     // Range support.
-    if (this.options.acceptRanges !== false) {
+    if (/^bytes$/i.test(context.response.get('Accept-Ranges'))) {
       const range = context.request.get('Range');
 
       // Range fresh.
@@ -177,64 +235,6 @@ export default class Files {
 
     // Return ranges.
     return [{ start: 0, end: Math.max(size - 1) }];
-  }
-
-  /**
-   * @private
-   * @method setupHeaders
-   * @description Setup headers
-   * @param context Koa context
-   * @param path File path
-   * @param stats File stats
-   */
-  private setupHeaders(context: Context, path: string, stats: Stats): void {
-    const { options } = this;
-    const { headers, etag } = options;
-
-    // Set status.
-    context.status = 200;
-
-    // Set Content-Type.
-    context.type = extname(path);
-
-    // ETag.
-    if (etag === false) {
-      // Remove ETag.
-      context.remove('ETag');
-    } else {
-      context.set('ETag', createETag(stats));
-    }
-
-    // Last-Modified.
-    if (options.lastModified === false) {
-      // Remove Last-Modified.
-      context.remove('Last-Modified');
-    } else {
-      // Set mtime utc string.
-      context.set('Last-Modified', stats.mtime.toUTCString());
-    }
-
-    // Set headers.
-    if (headers) {
-      if (isFunction(headers)) {
-        const fields = headers(path, stats);
-
-        if (fields) {
-          context.set(fields);
-        }
-      } else {
-        context.set(headers);
-      }
-    }
-
-    // Accept-Ranges, override this is unnecessary.
-    if (options.acceptRanges === false) {
-      // Set Accept-Ranges to none tell client not support.
-      context.set('Accept-Ranges', 'none');
-    } else {
-      // Set Accept-Ranges.
-      context.set('Accept-Ranges', 'bytes');
-    }
   }
 
   /**
