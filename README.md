@@ -52,53 +52,53 @@ export default function server(root: string, options?: Options): Middleware;
 
 ### root
 
-> Root directory string.
-> Nothing above this root directory can be served.
+- Root directory string.
+- Nothing above this root directory can be served.
 
 ### Options
 
 ##### `fs`
 
-> The fs module to use.
-> Defaults to `node:fs`.
+- Defaults to `node:fs`.
+- The fs module to use.
 
 ##### `headers`
 
-> Set headers to be sent.
-> See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
-> Defaults to `undefined`.
+- Defaults to `undefined`.
+- Set headers to be sent.
+- See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 
 ##### `acceptRanges`
 
-> Enable or disable accepting ranged requests.
-> Disabling this will not send Accept-Ranges and ignore the contents of the Range request header.
-> Can be overridden by the `headers`.
-> Defaults to `true`.
+- Defaults to `true`.
+- Enable or disable accepting ranged requests.
+- Disabling this will not send Accept-Ranges and ignore the contents of the Range request header.
+- Can be overridden by the `headers`.
 
 ##### `etag`
 
-> Enable or disable etag generation.
-> Use weak etag internally.
-> Can be overridden by the `headers`.
-> Defaults to `true`.
+- Defaults to `true`.
+- Enable or disable etag generation.
+- Use weak etag internally.
+- Can be overridden by the `headers`.
 
 ##### `lastModified`
 
-> Enable or disable Last-Modified header.
-> Uses the file system's last modified value.
-> Can be overridden by the `headers`.
-> Defaults to `true`.
+- Defaults to `true`.
+- Enable or disable Last-Modified header.
+- Uses the file system's last modified value.
+- Can be overridden by the `headers`.
 
 ##### `ignore`
 
-> Set ignore rules.
-> Defaults to `undefined`.
+- Defaults to `undefined`.
+- Set ignore rules.
 
 ##### `defer`
 
-> If true, serves after `await next()`,
-> allowing any downstream middleware to respond first.
-> Defaults to `false`.
+- Defaults to `false`.
+- If true, serves after `await next()`,
+- allowing any downstream middleware to respond first.
 
 ## Example
 
