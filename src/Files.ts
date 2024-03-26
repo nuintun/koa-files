@@ -197,15 +197,6 @@ export default class Files {
     // Set Content-Type.
     context.type = extname(path);
 
-    // Accept-Ranges.
-    if (options.acceptRanges === false) {
-      // Remove Accept-Ranges.
-      context.remove('Accept-Ranges');
-    } else {
-      // Set Accept-Ranges.
-      context.set('Accept-Ranges', 'bytes');
-    }
-
     // ETag.
     if (etag === false) {
       // Remove ETag.
@@ -234,6 +225,15 @@ export default class Files {
       } else {
         context.set(headers);
       }
+    }
+
+    // Accept-Ranges, override this is unnecessary.
+    if (options.acceptRanges === false) {
+      // Set Accept-Ranges to none tell client not support.
+      context.set('Accept-Ranges', 'none');
+    } else {
+      // Set Accept-Ranges.
+      context.set('Accept-Ranges', 'bytes');
     }
   }
 
