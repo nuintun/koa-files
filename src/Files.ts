@@ -2,8 +2,8 @@
  * @module Files
  */
 
-import etag from 'etag';
 import { Stats } from 'fs';
+import createETag from 'etag';
 import destroy from 'destroy';
 import { Context } from 'koa';
 import { PassThrough } from 'stream';
@@ -11,9 +11,8 @@ import parseRange from 'range-parser';
 import { generate } from './utils/hash';
 import { extname, join, resolve } from 'path';
 import { FileSystem, fstat } from './utils/fs';
-import { isBoolean, isFunction } from './utils/typeof';
-import { decodeURI, isETag, isETagFresh } from './utils/http';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
+import { decodeURI, isConditionalGET, isPreconditionFailure, isRangeFresh } from './utils/http';
 
 interface Range {
   start: number;
@@ -38,11 +37,20 @@ interface HeaderFunction {
 
 export interface Options {
   fs: FileSystem;
+  etag?: boolean;
   acceptRanges?: boolean;
   lastModified?: boolean;
   ignore?: IgnoreFunction;
   headers?: Headers | HeaderFunction;
-  etag?: boolean | { weak: boolean };
+}
+
+/**
+ * @function isFunction
+ * @description Check if value is function.
+ * @param value The value to check.
+ */
+function isFunction(value: unknown): value is Function {
+  return typeof value === 'function';
 }
 
 /**
@@ -61,81 +69,6 @@ export default class Files {
   constructor(root: string, options: Options) {
     this.options = options;
     this.root = unixify(resolve(root));
-  }
-
-  /**
-   * @private
-   * @method isConditionalGET
-   * @description Check if request is conditional GET.
-   * @param context Koa context.
-   */
-  private isConditionalGET(context: Context): boolean {
-    const { request } = context;
-
-    return !!(
-      request.get('If-Match') ||
-      request.get('If-None-Match') ||
-      request.get('If-Modified-Since') ||
-      request.get('if-Unmodified-Since')
-    );
-  }
-
-  /**
-   * @private
-   * @method isPreconditionFailure
-   * @description Check if request precondition failure.
-   * @param context Koa context.
-   */
-  private isPreconditionFailure(context: Context): boolean {
-    const { request, response } = context;
-
-    // If-Match.
-    const match = request.get('If-Match');
-
-    if (match) {
-      const etag = response.get('ETag');
-
-      return !etag || (match !== '*' && !isETagFresh(match, etag));
-    }
-
-    // If-Unmodified-Since.
-    const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
-
-    if (!Number.isNaN(unmodifiedSince)) {
-      const lastModified = Date.parse(response.get('Last-Modified'));
-
-      return Number.isNaN(lastModified) || lastModified > unmodifiedSince;
-    }
-
-    return false;
-  }
-
-  /**
-   * @private
-   * @method isRangeFresh
-   * @description Check if request range fresh.
-   * @param context Koa context.
-   */
-  private isRangeFresh(context: Context): boolean {
-    const { request, response } = context;
-    const ifRange = request.get('If-Range');
-
-    // No If-Range.
-    if (!ifRange) {
-      return true;
-    }
-
-    // If-Range as etag.
-    if (isETag(ifRange)) {
-      const etag = response.get('ETag');
-
-      return !!(etag && isETagFresh(ifRange, etag));
-    }
-
-    // If-Range as modified date.
-    const lastModified = response.get('Last-Modified');
-
-    return Date.parse(lastModified) <= Date.parse(ifRange);
   }
 
   /**
@@ -165,7 +98,7 @@ export default class Files {
       const range = context.request.get('Range');
 
       // Range fresh.
-      if (range && this.isRangeFresh(context)) {
+      if (range && isRangeFresh(context)) {
         // Parse range -1 -2 or [].
         const parsed = parseRange(size, range, { combine: true });
 
@@ -256,10 +189,39 @@ export default class Files {
    */
   private setupHeaders(context: Context, path: string, stats: Stats): void {
     const { options } = this;
-    const { headers, etag: etagOptions } = options;
+    const { headers, etag } = options;
 
     // Set status.
     context.status = 200;
+
+    // Set Content-Type.
+    context.type = extname(path);
+
+    // Accept-Ranges.
+    if (options.acceptRanges === false) {
+      // Remove Accept-Ranges.
+      context.remove('Accept-Ranges');
+    } else {
+      // Set Accept-Ranges.
+      context.set('Accept-Ranges', 'bytes');
+    }
+
+    // ETag.
+    if (etag === false) {
+      // Remove ETag.
+      context.remove('ETag');
+    } else {
+      context.set('ETag', createETag(stats));
+    }
+
+    // Last-Modified.
+    if (options.lastModified === false) {
+      // Remove Last-Modified.
+      context.remove('Last-Modified');
+    } else {
+      // Set mtime utc string.
+      context.set('Last-Modified', stats.mtime.toUTCString());
+    }
 
     // Set headers.
     if (headers) {
@@ -272,37 +234,6 @@ export default class Files {
       } else {
         context.set(headers);
       }
-    }
-
-    // Set Content-Type.
-    context.type = extname(path);
-
-    // ETag.
-    if (etagOptions === false) {
-      context.remove('ETag');
-    } else {
-      // Set ETag.
-      if (isBoolean(etagOptions)) {
-        context.set('ETag', etag(stats));
-      } else {
-        context.set('ETag', etag(stats, etagOptions));
-      }
-    }
-
-    // Accept-Ranges.
-    if (options.acceptRanges === false) {
-      context.remove('Accept-Ranges');
-    } else {
-      // Set Accept-Ranges.
-      context.set('Accept-Ranges', 'bytes');
-    }
-
-    // Last-Modified.
-    if (options.lastModified === false) {
-      context.remove('Last-Modified');
-    } else {
-      // Set mtime utc string.
-      context.set('Last-Modified', stats.mtime.toUTCString());
     }
   }
 
@@ -451,9 +382,9 @@ export default class Files {
     this.setupHeaders(context, path, stats);
 
     // Conditional get support.
-    if (this.isConditionalGET(context)) {
+    if (isConditionalGET(context)) {
       // Request precondition failure.
-      if (this.isPreconditionFailure(context)) {
+      if (isPreconditionFailure(context)) {
         return context.throw(412);
       }
 

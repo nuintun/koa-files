@@ -2,6 +2,8 @@
  * @module http
  */
 
+import { Context } from 'koa';
+
 /**
  * @function decodeURI
  * @description Decode URI component.
@@ -56,7 +58,7 @@ export function parseTokens(value: string): string[] {
  * @description Check if etag is valid.
  * @param value The value to check.
  */
-export function isETag(value: string): boolean {
+function isETag(value: string): boolean {
   return /^(?:W\/)?"[\s\S]+"$/.test(value);
 }
 
@@ -66,8 +68,80 @@ export function isETag(value: string): boolean {
  * @param match The match value.
  * @param etag The etag value.
  */
-export function isETagFresh(match: string, etag: string): boolean {
+function isETagFresh(match: string, etag: string): boolean {
   return parseTokens(match).some(match => {
     return match === etag || match === 'W/' + etag || 'W/' + match === etag;
   });
+}
+
+/**
+ * @function isConditionalGET
+ * @description Check if request is conditional GET.
+ * @param context Koa context.
+ */
+export function isConditionalGET(context: Context): boolean {
+  const { request } = context;
+
+  return !!(
+    request.get('If-Match') ||
+    request.get('If-None-Match') ||
+    request.get('If-Modified-Since') ||
+    request.get('if-Unmodified-Since')
+  );
+}
+
+/**
+ * @function isRangeFresh
+ * @description Check if request range fresh.
+ * @param context Koa context.
+ */
+export function isRangeFresh(context: Context): boolean {
+  const { request, response } = context;
+  const ifRange = request.get('If-Range');
+
+  // No If-Range.
+  if (!ifRange) {
+    return true;
+  }
+
+  // If-Range as etag.
+  if (isETag(ifRange)) {
+    const etag = response.get('ETag');
+
+    return !!(etag && isETagFresh(ifRange, etag));
+  }
+
+  // If-Range as modified date.
+  const lastModified = response.get('Last-Modified');
+
+  return Date.parse(lastModified) <= Date.parse(ifRange);
+}
+
+/**
+ * @function isPreconditionFailure
+ * @description Check if request precondition failure.
+ * @param context Koa context.
+ */
+export function isPreconditionFailure(context: Context): boolean {
+  const { request, response } = context;
+
+  // If-Match.
+  const match = request.get('If-Match');
+
+  if (match) {
+    const etag = response.get('ETag');
+
+    return !etag || (match !== '*' && !isETagFresh(match, etag));
+  }
+
+  // If-Unmodified-Since.
+  const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
+
+  if (!Number.isNaN(unmodifiedSince)) {
+    const lastModified = Date.parse(response.get('Last-Modified'));
+
+    return Number.isNaN(lastModified) || lastModified > unmodifiedSince;
+  }
+
+  return false;
 }
