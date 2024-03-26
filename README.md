@@ -92,7 +92,7 @@ export default function server(root: string, options?: Options): Middleware;
 ##### `ignore`
 
 - Defaults to `undefined`.
-- Set ignore rules.
+- Function that determines if a file should be ignored.
 
 ##### `defer`
 
