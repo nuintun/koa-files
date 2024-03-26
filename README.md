@@ -60,7 +60,7 @@ export default function server(root: string, options?: Options): Middleware;
 ##### `fs`
 
 - Defaults to `node:fs`.
-- The fs module to use.
+- The file system to used.
 
 ##### `headers`
 
