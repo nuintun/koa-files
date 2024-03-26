@@ -78,6 +78,7 @@ export default function server(root: string, options?: Options): Middleware;
 ##### `etag`
 
 > Enable or disable etag generation.
+> Use weak etag internally.
 > Can be overridden by the `headers`.
 > Defaults to `true`.
 
