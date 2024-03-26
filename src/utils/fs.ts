@@ -7,11 +7,11 @@ import { ReadStream, Stats } from 'fs';
 type PathLike = string | Buffer | URL;
 
 /**
- * @function fstat
+ * @function stat
  * @description Get file stats.
  * @param path The file path.
  */
-export function fstat(fs: FileSystem, path: string): Promise<Stats | null> {
+export function stat(fs: FileSystem, path: string): Promise<Stats | null> {
   return new Promise(resolve => {
     fs.stat(path, (error, stats) => {
       resolve(error ? null : stats);

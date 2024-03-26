@@ -7,25 +7,14 @@ import createETag from 'etag';
 import destroy from 'destroy';
 import { Context } from 'koa';
 import { PassThrough } from 'stream';
-import parseRange from 'range-parser';
-import { generate } from './utils/hash';
+import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'path';
-import { FileSystem, fstat } from './utils/fs';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
-import { decodeURI, isConditionalGET, isPreconditionFailure, isRangeFresh } from './utils/http';
-
-interface Range {
-  start: number;
-  end?: number;
-  prefix?: string;
-  suffix?: string;
-}
+import { decodeURI, isConditionalGET, isPreconditionFailure, parseRanges, Range } from './utils/http';
 
 interface IgnoreFunction {
   (path: string): boolean;
 }
-
-type Ranges = Range[] | -1 | -2;
 
 interface Headers {
   [key: string]: string | string[];
@@ -139,102 +128,6 @@ export default class Files {
         context.set(headers);
       }
     }
-  }
-
-  /**
-   * @private
-   * @method parseRange
-   * @description Parse range.
-   * @param context Koa context.
-   * @param stats File stats.
-   */
-  private parseRange(context: Context, stats: Stats): Ranges {
-    const { size } = stats;
-
-    // Range support.
-    if (/^bytes$/i.test(context.response.get('Accept-Ranges'))) {
-      const range = context.request.get('Range');
-
-      // Range fresh.
-      if (range && isRangeFresh(context)) {
-        // Parse range -1 -2 or [].
-        const parsed = parseRange(size, range, { combine: true });
-
-        // -1 signals an unsatisfiable range.
-        // -2 signals a malformed header string.
-        if (parsed === -1 || parsed === -2) {
-          return parsed;
-        }
-
-        // Ranges ok, support multiple ranges.
-        if (parsed.type === 'bytes') {
-          // Set 206 status.
-          context.status = 206;
-
-          const { length } = parsed;
-
-          // Multiple ranges.
-          if (length > 1) {
-            // Content-Length.
-            let contentLength = 0;
-
-            // Ranges.
-            const ranges: Range[] = [];
-            // Range boundary.
-            const boundary = `<${generate()}>`;
-            // Range suffix.
-            const suffix = `\r\n--${boundary}--\r\n`;
-            // Multipart Content-Type.
-            const contentType = `Content-Type: ${context.type}`;
-
-            // Override Content-Type.
-            context.type = `multipart/byteranges; boundary=${boundary}`;
-
-            // Map ranges.
-            for (let index = 0; index < length; index++) {
-              const { start, end } = parsed[index];
-              // The first prefix boundary no \r\n.
-              const head = index > 0 ? '\r\n' : '';
-              const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
-              const prefix = `${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
-
-              // Compute Content-Length
-              contentLength += end - start + 1 + Buffer.byteLength(prefix);
-
-              // Cache range.
-              ranges.push({ start, end, prefix });
-            }
-
-            // The last add suffix boundary.
-            ranges[length - 1].suffix = suffix;
-            // Compute Content-Length.
-            contentLength += Buffer.byteLength(suffix);
-            // Set Content-Length.
-            context.length = contentLength;
-
-            // Return ranges.
-            return ranges;
-          } else {
-            const [{ start, end }] = parsed;
-
-            // Set Content-Length.
-            context.length = end - start + 1;
-
-            // Set Content-Range.
-            context.set('Content-Range', `bytes ${start}-${end}/${size}`);
-
-            // Return ranges.
-            return parsed;
-          }
-        }
-      }
-    }
-
-    // Set Content-Length.
-    context.length = size;
-
-    // Return ranges.
-    return [{ start: 0, end: Math.max(size - 1) }];
   }
 
   /**
@@ -364,7 +257,7 @@ export default class Files {
     }
 
     // File stats.
-    const stats = await fstat(this.options.fs, path);
+    const stats = await stat(this.options.fs, path);
 
     // Check file stats.
     if (
@@ -412,7 +305,7 @@ export default class Files {
     }
 
     // Parsed ranges.
-    const ranges = this.parseRange(context, stats);
+    const ranges = parseRanges(context, stats);
 
     // 416
     if (ranges === -1) {

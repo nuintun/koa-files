@@ -2,7 +2,19 @@
  * @module http
  */
 
+import { Stats } from 'fs';
 import { Context } from 'koa';
+import { generate } from './hash';
+import parseRange from 'range-parser';
+
+export interface Range {
+  start: number;
+  end?: number;
+  prefix?: string;
+  suffix?: string;
+}
+
+type Ranges = Range[] | -1 | -2;
 
 /**
  * @function isETag
@@ -47,6 +59,33 @@ function parseTokens(value: string): string[] {
   tokens.push(value.substring(start, end));
 
   return tokens;
+}
+
+/**
+ * @function isRangeFresh
+ * @description Check if request range fresh.
+ * @param context Koa context.
+ */
+function isRangeFresh(context: Context): boolean {
+  const { request, response } = context;
+  const ifRange = request.get('If-Range');
+
+  // No If-Range.
+  if (!ifRange) {
+    return true;
+  }
+
+  // If-Range as etag.
+  if (isETag(ifRange)) {
+    const etag = response.get('ETag');
+
+    return !!(etag && isETagFresh(ifRange, etag));
+  }
+
+  // If-Range as modified date.
+  const lastModified = response.get('Last-Modified');
+
+  return Date.parse(lastModified) <= Date.parse(ifRange);
 }
 
 /**
@@ -123,28 +162,97 @@ export function isPreconditionFailure({ request, response }: Context): boolean {
 }
 
 /**
- * @function isRangeFresh
- * @description Check if request range fresh.
+ * @private
+ * @method parseRanges
+ * @description Parse ranges.
  * @param context Koa context.
+ * @param stats File stats.
  */
-export function isRangeFresh(context: Context): boolean {
-  const { request, response } = context;
-  const ifRange = request.get('If-Range');
+export function parseRanges(context: Context, stats: Stats): Ranges {
+  const { size } = stats;
 
-  // No If-Range.
-  if (!ifRange) {
-    return true;
+  // Range support.
+  if (/^bytes$/i.test(context.response.get('Accept-Ranges'))) {
+    const range = context.request.get('Range');
+
+    // Range fresh.
+    if (range && isRangeFresh(context)) {
+      // Parse range -1 -2 or [].
+      const parsed = parseRange(size, range, { combine: true });
+
+      // -1 signals an unsatisfiable range.
+      // -2 signals a malformed header string.
+      if (parsed === -1 || parsed === -2) {
+        return parsed;
+      }
+
+      // Ranges ok, support multiple ranges.
+      if (parsed.type === 'bytes') {
+        // Set 206 status.
+        context.status = 206;
+
+        const { length } = parsed;
+
+        // Multiple ranges.
+        if (length > 1) {
+          // Content-Length.
+          let contentLength = 0;
+
+          // Ranges.
+          const ranges: Range[] = [];
+          // Range boundary.
+          const boundary = `<${generate()}>`;
+          // Range suffix.
+          const suffix = `\r\n--${boundary}--\r\n`;
+          // Multipart Content-Type.
+          const contentType = `Content-Type: ${context.type}`;
+
+          // Override Content-Type.
+          context.type = `multipart/byteranges; boundary=${boundary}`;
+
+          // Map ranges.
+          for (let index = 0; index < length; index++) {
+            const { start, end } = parsed[index];
+            // The first prefix boundary no \r\n.
+            const head = index > 0 ? '\r\n' : '';
+            const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
+            const prefix = `${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+
+            // Compute Content-Length
+            contentLength += end - start + 1 + Buffer.byteLength(prefix);
+
+            // Cache range.
+            ranges.push({ start, end, prefix });
+          }
+
+          // The last add suffix boundary.
+          ranges[length - 1].suffix = suffix;
+          // Compute Content-Length.
+          contentLength += Buffer.byteLength(suffix);
+          // Set Content-Length.
+          context.length = contentLength;
+
+          // Return ranges.
+          return ranges;
+        } else {
+          const [{ start, end }] = parsed;
+
+          // Set Content-Length.
+          context.length = end - start + 1;
+
+          // Set Content-Range.
+          context.set('Content-Range', `bytes ${start}-${end}/${size}`);
+
+          // Return ranges.
+          return parsed;
+        }
+      }
+    }
   }
 
-  // If-Range as etag.
-  if (isETag(ifRange)) {
-    const etag = response.get('ETag');
+  // Set Content-Length.
+  context.length = size;
 
-    return !!(etag && isETagFresh(ifRange, etag));
-  }
-
-  // If-Range as modified date.
-  const lastModified = response.get('Last-Modified');
-
-  return Date.parse(lastModified) <= Date.parse(ifRange);
+  // Return ranges.
+  return [{ start: 0, end: Math.max(size - 1) }];
 }
