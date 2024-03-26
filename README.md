@@ -86,7 +86,7 @@ export default function server(root: string, options?: Options): Middleware;
 
 - Defaults to `true`.
 - Enable or disable Last-Modified header.
-- Uses the file system's last modified value.
+- Use the file system's last modified value.
 - Can be overridden by the `headers`.
 
 ##### `ignore`
