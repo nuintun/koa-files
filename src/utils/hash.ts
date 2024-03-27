@@ -21,6 +21,7 @@ const CHARS: string[] = [
 /**
  * @function generate
  * @description Generate a hash.
+ * @param length The length of hash.
  */
 export function generate(length: number = 32): string {
   let hash = '';

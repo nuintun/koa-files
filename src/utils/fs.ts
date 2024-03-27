@@ -9,6 +9,7 @@ type PathLike = string | Buffer | URL;
 /**
  * @function stat
  * @description Get file stats.
+ * @param fs The file system to used.
  * @param path The file path.
  */
 export function stat(fs: FileSystem, path: string): Promise<Stats | null> {
