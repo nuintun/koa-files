@@ -162,8 +162,7 @@ export function isPreconditionFailure({ request, response }: Context): boolean {
 }
 
 /**
- * @private
- * @method parseRanges
+ * @function parseRanges
  * @description Parse ranges.
  * @param context Koa context.
  * @param stats File stats.
