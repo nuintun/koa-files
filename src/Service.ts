@@ -1,5 +1,5 @@
 /**
- * @module Files
+ * @module Service
  */
 
 import { Stats } from 'fs';
@@ -43,17 +43,17 @@ function isFunction(value: unknown): value is Function {
 }
 
 /**
- * @class Files
+ * @class Service
  */
-export default class Files {
+export default class Service {
   private root: string;
   private options: Options;
 
   /**
    * @constructor
-   * @description Create files service.
-   * @param root Files service root.
-   * @param options Files service options.
+   * @description Create file service.
+   * @param root File service root.
+   * @param options File service options.
    */
   constructor(root: string, options: Options) {
     this.options = options;

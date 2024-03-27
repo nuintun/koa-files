@@ -5,9 +5,9 @@
 import fs from 'fs';
 import { Middleware } from 'koa';
 import { FileSystem } from './utils/fs';
-import Files, { Options as FilesOptions } from './Files';
+import Service, { Options as ServiceOptions } from './Service';
 
-export interface Options extends Omit<FilesOptions, 'fs'> {
+export interface Options extends Omit<ServiceOptions, 'fs'> {
   fs?: FileSystem;
   defer?: boolean;
 }
@@ -19,17 +19,17 @@ export interface Options extends Omit<FilesOptions, 'fs'> {
  */
 export default function server(root: string, options?: Options): Middleware {
   const config = { fs, ...options };
-  const files = new Files(root, config);
+  const service = new Service(root, config);
 
   if (config.defer) {
     return async (context, next) => {
       await next();
-      await files.response(context);
+      await service.response(context);
     };
   }
 
   return async (context, next) => {
-    if (!(await files.response(context))) {
+    if (!(await service.response(context))) {
       await next();
     }
   };
