@@ -66,11 +66,11 @@
     "@types/koa": "^2.15.0",
     "@types/range-parser": "^1.2.7",
     "koa": "^2.15.2",
-    "magic-string": "^0.30.8",
+    "magic-string": "^0.30.9",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
     "rollup": "^4.14.0",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.4"
   },
   "peerDependencies": {
     "koa": "^2.0.0"
