@@ -65,11 +65,11 @@
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
     "@types/range-parser": "^1.2.7",
-    "koa": "^2.15.2",
+    "koa": "^2.15.3",
     "magic-string": "^0.30.9",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
-    "rollup": "^4.14.1",
+    "rollup": "^4.14.2",
     "typescript": "^5.4.5"
   },
   "peerDependencies": {
