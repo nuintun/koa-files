@@ -8,6 +8,13 @@ import typescript from '@rollup/plugin-typescript';
 
 const pkg = createRequire(import.meta.url)('../package.json');
 
+const externals = [
+  // Dependencies
+  ...Object.keys(pkg.dependencies || {}),
+  // Peer dependencies
+  ...Object.keys(pkg.peerDependencies || {})
+];
+
 const banner = `/**
  * @package ${pkg.name}
  * @license ${pkg.license}
@@ -45,16 +52,17 @@ export default function rollup(esnext) {
       }
     },
     external(source) {
-      const { dependencies = {}, peerDependencies = {} } = pkg;
+      if (isBuiltin(source)) {
+        return true;
+      }
 
-      return (
-        // Built-in modules
-        isBuiltin(source) ||
-        // Dependencies modules
-        Reflect.has(dependencies, source) ||
-        // Peer dependencies modules
-        Reflect.has(peerDependencies, source)
-      );
+      for (const external of externals) {
+        if (source === external || source.startsWith(`${external}/`)) {
+          return true;
+        }
+      }
+
+      return false;
     }
   };
 }
