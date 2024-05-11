@@ -51,7 +51,7 @@
     "format": "prettier --write . --ignore-path .prettierignore",
     "build": "npm run clean && npm run build:main && npm run format",
     "build:main": "npm run build:cjs && npm run build:esm && npm run build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir types"
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir types && node tools/fix-types.js"
   },
   "dependencies": {
     "destroy": "^1.2.0",
@@ -70,6 +70,7 @@
     "prettier": "^3.2.5",
     "rimraf": "^5.0.6",
     "rollup": "^4.17.2",
+    "tsc-alias": "^1.8.9",
     "typescript": "^5.4.5"
   },
   "peerDependencies": {
