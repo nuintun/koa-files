@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -67,11 +67,11 @@
     "@types/range-parser": "^1.2.7",
     "koa": "^2.15.3",
     "magic-string": "^0.30.10",
-    "prettier": "^3.3.2",
-    "rimraf": "^5.0.7",
-    "rollup": "^4.18.0",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.18.1",
     "tsc-alias": "^1.8.10",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.3"
   },
   "peerDependencies": {
     "koa": "^2.0.0"
