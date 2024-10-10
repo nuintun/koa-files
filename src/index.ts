@@ -24,12 +24,12 @@ export default function server(root: string, options?: Options): Middleware {
   if (config.defer) {
     return async (context, next) => {
       await next();
-      await service.response(context);
+      await service.respond(context);
     };
   }
 
   return async (context, next) => {
-    if (!(await service.response(context))) {
+    if (!(await service.respond(context))) {
       await next();
     }
   };

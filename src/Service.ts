@@ -52,8 +52,8 @@ export default class Service {
   /**
    * @constructor
    * @description Create file service.
-   * @param root File service root.
-   * @param options File service options.
+   * @param root The file service root.
+   * @param options The file service options.
    */
   constructor(root: string, options: Options) {
     this.options = options;
@@ -64,7 +64,7 @@ export default class Service {
    * @private
    * @method isIgnore
    * @description Check if path is ignore.
-   * @param path File path.
+   * @param path The path to check.
    */
   private isIgnore(path: string): boolean {
     const { ignore } = this.options;
@@ -75,10 +75,10 @@ export default class Service {
   /**
    * @private
    * @method setupHeaders
-   * @description Setup headers
-   * @param context Koa context
-   * @param path File path
-   * @param stats File stats
+   * @description Setup headers.
+   * @param context The koa context.
+   * @param path The file path.
+   * @param stats The file stats.
    */
   private setupHeaders(context: Context, path: string, stats: Stats): void {
     const { options } = this;
@@ -132,14 +132,14 @@ export default class Service {
 
   /**
    * @private
-   * @method write
-   * @description Write file to stream.
-   * @param stream Destination stream.
+   * @method read
+   * @description Read file with range.
    * @param path The file path to read.
    * @param range The range to read.
-   * @param end Is destory destination stream after read complete.
+   * @param stream The destination stream.
+   * @param end The end flag after pipe to stream.
    */
-  private write(stream: PassThrough, path: string, range: Range, end: boolean): Promise<boolean> {
+  private read(path: string, range: Range, stream: PassThrough, end: boolean): Promise<boolean> {
     const { fs } = this.options;
 
     return new Promise((resolve): void => {
@@ -194,27 +194,19 @@ export default class Service {
   /**
    * @private
    * @method send
-   * @description Send file.
-   * @param context Koa context.
-   * @param path File path.
-   * @param ranges Read ranges.
+   * @description Send file with ranges.
+   * @param path The file path to send.
+   * @param ranges The ranges to send.
+   * @param stream The destination stream.
    */
-  private async send(context: Context, path: string, ranges: Range[]): Promise<void> {
-    // Set stream body, highWaterMark 64kb.
-    const stream = new PassThrough({
-      highWaterMark: 65536
-    });
-
-    // Set response body.
-    context.body = stream;
-
+  private async send(path: string, ranges: Range[], stream: PassThrough): Promise<void> {
     // Ranges length.
     let { length } = ranges;
 
     // Write ranges to stream.
     for (const range of ranges) {
       // Write range.
-      const passed = await this.write(stream, path, range, --length === 0);
+      const passed = await this.read(path, range, stream, --length === 0);
 
       // If not passed, break.
       if (!passed) {
@@ -225,11 +217,11 @@ export default class Service {
 
   /**
    * @public
-   * @method response
-   * @description Response to koa context.
-   * @param context Koa context.
+   * @method respond
+   * @description Respond file.
+   * @param context The koa context.
    */
-  public async response(context: Context): Promise<boolean> {
+  public async respond(context: Context): Promise<boolean> {
     const { root } = this;
 
     // Only support GET and HEAD (405).
@@ -321,8 +313,16 @@ export default class Service {
       return context.throw(400);
     }
 
-    // Send file.
-    this.send(context, path, ranges);
+    // Set stream body, highWaterMark 64kb.
+    const stream = new PassThrough({
+      highWaterMark: 65536
+    });
+
+    // Send file with ranges.
+    this.send(path, ranges, stream);
+
+    // Set response body.
+    context.body = stream;
 
     // File found.
     return true;
