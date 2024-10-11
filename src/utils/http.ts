@@ -116,7 +116,7 @@ export function decodeURI(URI: string): string | -1 {
 /**
  * @function isConditionalGET
  * @description Check if request is conditional GET.
- * @param context Koa context.
+ * @param context The koa context.
  */
 export function isConditionalGET(context: Context): boolean {
   const { request } = context;
@@ -132,7 +132,7 @@ export function isConditionalGET(context: Context): boolean {
 /**
  * @function isPreconditionFailure
  * @description Check if request precondition failure.
- * @param context Koa context.
+ * @param context The koa context.
  */
 export function isPreconditionFailure({ request, response }: Context): boolean {
   // If-Match.
@@ -164,8 +164,8 @@ export function isPreconditionFailure({ request, response }: Context): boolean {
 /**
  * @function parseRanges
  * @description Parse ranges.
- * @param context Koa context.
- * @param stats File stats.
+ * @param context The koa context.
+ * @param stats The file stats.
  */
 export function parseRanges(context: Context, stats: Stats): Ranges {
   const { size } = stats;

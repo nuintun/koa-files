@@ -229,10 +229,10 @@ export default class Service {
       return false;
     }
 
-    // Get pathname of file
+    // Get pathname of file.
     const pathname = decodeURI(context.path);
 
-    // Pathname decode failed or includes null byte(s)
+    // Pathname decode failed or includes null byte(s).
     if (pathname === -1 || pathname.includes('\0')) {
       return context.throw(400);
     }
