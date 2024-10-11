@@ -229,14 +229,15 @@ export default class Service {
       return false;
     }
 
-    // Get path of file
+    // Get pathname of file
     const pathname = decodeURI(context.path);
-    const path = pathname === -1 ? pathname : unixify(join(root, pathname));
 
-    // Path -1 or null byte(s)
-    if (path === -1 || path.includes('\0')) {
+    // Pathname decode failed or includes null byte(s)
+    if (pathname === -1 || pathname.includes('\0')) {
       return context.throw(400);
     }
+
+    const path = unixify(join(root, pathname));
 
     // Malicious path (403).
     if (isOutRoot(path, root)) {
