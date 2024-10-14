@@ -1,3 +1,5 @@
 # Ignore files
+*.ico
+*.mp4
 *.min.*
 pnpm-lock.yaml

@@ -1,0 +1,2 @@
+GET http://127.0.0.1/github.mp4
+Range: bytes=0-128,256-512,1024-1152
