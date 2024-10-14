@@ -4,15 +4,10 @@
 
 import { Stats } from 'fs';
 import { Context } from 'koa';
+import { Buffer } from 'buffer';
+import { Range } from './stream';
 import { generate } from './hash';
 import parseRange from 'range-parser';
-
-export interface Range {
-  start: number;
-  end?: number;
-  prefix?: string;
-  suffix?: string;
-}
 
 type Ranges = Range[] | -1 | -2;
 
@@ -199,51 +194,55 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
 
           // Ranges.
           const ranges: Range[] = [];
+          // Parsed entries.
+          const entries = parsed.entries();
           // Range boundary.
           const boundary = `<${generate()}>`;
-          // Range suffix.
-          const suffix = `\r\n--${boundary}--\r\n`;
           // Multipart Content-Type.
           const contentType = `Content-Type: ${context.type}`;
+          // Range suffix.
+          const suffix = Buffer.from(`\r\n--${boundary}--\r\n`);
 
           // Override Content-Type.
           context.type = `multipart/byteranges; boundary=${boundary}`;
 
           // Map ranges.
-          for (let index = 0; index < length; index++) {
-            const { start, end } = parsed[index];
-            // The first prefix boundary no \r\n.
+          for (const [index, { start, end }] of entries) {
+            const length = end - start + 1;
             const head = index > 0 ? '\r\n' : '';
             const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
-            const prefix = `${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`;
+            const prefix = Buffer.from(`${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`);
 
             // Compute Content-Length
-            contentLength += end - start + 1 + Buffer.byteLength(prefix);
+            contentLength += length + prefix.length;
 
             // Cache range.
-            ranges.push({ start, end, prefix });
+            ranges.push({ offset: start, length, prefix });
           }
+
+          // Compute Content-Length.
+          contentLength += suffix.length;
+
+          // Set Content-Length.
+          context.length = contentLength;
 
           // The last add suffix boundary.
           ranges[length - 1].suffix = suffix;
-          // Compute Content-Length.
-          contentLength += Buffer.byteLength(suffix);
-          // Set Content-Length.
-          context.length = contentLength;
 
           // Return ranges.
           return ranges;
         } else {
           const [{ start, end }] = parsed;
+          const length = end - start + 1;
 
           // Set Content-Length.
-          context.length = end - start + 1;
+          context.length = length;
 
           // Set Content-Range.
           context.set('Content-Range', `bytes ${start}-${end}/${size}`);
 
           // Return ranges.
-          return parsed;
+          return [{ offset: start, length }];
         }
       }
     }
@@ -253,5 +252,5 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
   context.length = size;
 
   // Return ranges.
-  return [{ start: 0, end: Math.max(size - 1) }];
+  return [{ offset: 0, length: size }];
 }
