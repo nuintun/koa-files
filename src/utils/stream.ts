@@ -60,14 +60,14 @@ export class FileReadStream extends Readable {
    * @param callback The callback.
    */
   _construct(callback: Callback): void {
-    this.fs.open(this.path, 'r', (error, fd) => {
+    this.fs.open(this.path, 'r', (openError, fd) => {
       // Open success.
-      if (error === null) {
+      if (openError === null) {
         this.fd = fd;
       }
 
       // Call callback.
-      callback(error);
+      callback(openError);
     });
   }
 
@@ -90,12 +90,12 @@ export class FileReadStream extends Readable {
         const buffer = Buffer.alloc(Math.min(size, length - bytesRead));
 
         // Read range data.
-        this.fs.read(this.fd, buffer, 0, buffer.length, position, (error, bytesRead, buffer) => {
+        this.fs.read(this.fd, buffer, 0, buffer.length, position, (readError, bytesRead, buffer) => {
           // Set the reading flag to false.
           this.reading = false;
 
           // Read success.
-          if (error === null) {
+          if (readError === null) {
             const buffers: Buffer[] = [];
 
             // Range start.
@@ -132,7 +132,7 @@ export class FileReadStream extends Readable {
             // Push the buffers to the stream.
             this.push(Buffer.concat(buffers));
           } else {
-            this.destroy(error);
+            this.destroy(readError);
           }
         });
       } else {
