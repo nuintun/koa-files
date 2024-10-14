@@ -84,8 +84,10 @@ export class FileReadStream extends Readable {
 
       // Check range and file fd.
       if (range && this.fd != null) {
-        const position = range.offset + this.bytesRead;
-        const buffer = Buffer.alloc(Math.min(size, range.length - this.bytesRead));
+        const { length } = range;
+        const { bytesRead } = this;
+        const position = range.offset + bytesRead;
+        const buffer = Buffer.alloc(Math.min(size, length - bytesRead));
 
         // Read range data.
         this.fs.read(this.fd, buffer, 0, buffer.length, position, (error, bytesRead, buffer) => {
@@ -104,24 +106,19 @@ export class FileReadStream extends Readable {
               }
             }
 
-            // Bytes were read.
-            const bytesWereRead = bytesRead > 0;
+            // Update bytes read.
+            this.bytesRead += bytesRead;
 
-            // Range data.
-            if (bytesWereRead) {
-              // Push the read data to the stream.
-              if (bytesRead === buffer.length) {
-                buffers.push(buffer);
-              } else {
-                buffers.push(buffer.subarray(0, bytesRead));
-              }
+            // Has bytes read.
+            const hasBytesRead = bytesRead > 0;
 
-              // Update bytes read.
-              this.bytesRead += bytesRead;
+            // Push the read data to the stream.
+            if (hasBytesRead || length === 0) {
+              buffers.push(buffer.subarray(0, bytesRead));
             }
 
             // Range end.
-            if (!bytesWereRead || this.bytesRead >= range.length) {
+            if (!hasBytesRead || this.bytesRead >= range.length) {
               // Current range is fully read, move to the next range.
               this.bytesRead = 0;
               this.currentRangeIndex++;
@@ -133,11 +130,7 @@ export class FileReadStream extends Readable {
             }
 
             // Push the buffers to the stream.
-            if (buffers.length > 0) {
-              this.push(Buffer.concat(buffers));
-            } else {
-              this._read(size);
-            }
+            this.push(Buffer.concat(buffers));
           } else {
             this.destroy(error);
           }

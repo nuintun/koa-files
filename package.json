@@ -54,7 +54,6 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir types && node tools/fix-types.js"
   },
   "dependencies": {
-    "destroy": "^1.2.0",
     "etag": "^1.8.1",
     "range-parser": "^1.2.1",
     "tslib": "^2.7.0"
