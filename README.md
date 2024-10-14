@@ -89,6 +89,11 @@ export default function server(root: string, options?: Options): Middleware;
 - Use the file system's last modified value.
 - Can be overridden by the `headers`.
 
+##### `highWaterMark`
+
+- Defaults to `node:stream.Readable.highWaterMark`.
+- Set the high water mark for the read stream.
+
 ##### `ignore`
 
 - Defaults to `undefined`.
