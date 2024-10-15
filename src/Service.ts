@@ -24,8 +24,8 @@ interface HeaderFunction {
 }
 
 export interface Options {
-  etag?: boolean;
   fs: FileSystem;
+  etag?: boolean;
   acceptRanges?: boolean;
   lastModified?: boolean;
   highWaterMark?: number;
