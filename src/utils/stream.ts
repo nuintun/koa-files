@@ -63,7 +63,8 @@ export class FileReadStream extends Readable {
   }
 
   /**
-   * @function _construct
+   * @public
+   * @method _construct
    * @param callback The callback.
    */
   public _construct(callback: Callback): void {
@@ -76,10 +77,19 @@ export class FileReadStream extends Readable {
     });
   }
 
+  /**
+   * @private
+   * @method getRange
+   */
   private getRange(): Range | undefined {
     return this.ranges[this.currentRangeIndex];
   }
 
+  /**
+   * @private
+   * @method getPadding
+   * @param range The current range.
+   */
   private getPadding(range: Range): Buffer | undefined {
     switch (this.readState) {
       case ReadState.PREFIX:
@@ -89,7 +99,14 @@ export class FileReadStream extends Readable {
     }
   }
 
-  private readPadding(fd: number, range: Range, size: number): void {
+  /**
+   * @private
+   * @method readFilePadding
+   * @param fd The file descriptor.
+   * @param range The current range.
+   * @param size The number of bytes to read.
+   */
+  private readFilePadding(fd: number, range: Range, size: number): void {
     let bytesRead = 0;
 
     const padding = this.getPadding(range);
@@ -118,7 +135,7 @@ export class FileReadStream extends Readable {
           this.readState = ReadState.RANGE;
 
           if (!hasBytesRead) {
-            this.readRange(fd, range, size);
+            this.readFileRange(fd, range, size);
           }
           break;
         case ReadState.SUFFIX:
@@ -131,7 +148,7 @@ export class FileReadStream extends Readable {
             if (range == null) {
               this.push(null);
             } else {
-              this.readPadding(fd, range, size);
+              this.readFilePadding(fd, range, size);
             }
           }
           break;
@@ -139,31 +156,31 @@ export class FileReadStream extends Readable {
     }
   }
 
-  private readRange(fd: number, range: Range, size: number): void {
+  /**
+   * @private
+   * @method readFileRange
+   * @param fd The file descriptor.
+   * @param range The current range.
+   * @param size The number of bytes to read.
+   */
+  private readFileRange(fd: number, range: Range, size: number): void {
     this.reading = true;
 
-    const { length } = range;
     const { bytesRead } = this;
     const position = range.offset + bytesRead;
-    const buffer = Buffer.alloc(Math.min(size, length - bytesRead));
+    const buffer = Buffer.alloc(Math.min(size, range.length - bytesRead));
 
     this.fs.read(fd, buffer, 0, buffer.length, position, (readError, bytesRead, buffer) => {
       if (readError === null) {
-        const hasBytesRead = bytesRead > 0;
-
-        if (hasBytesRead) {
+        if (bytesRead > 0) {
           this.push(buffer.subarray(0, bytesRead));
 
           this.bytesRead += bytesRead;
-        }
-
-        if (this.bytesRead >= length) {
+        } else {
           this.bytesRead = 0;
           this.readState = ReadState.SUFFIX;
-        }
 
-        if (!hasBytesRead) {
-          this.readPadding(fd, range, size);
+          this.readFilePadding(fd, range, size);
         }
       } else {
         this.destroy(readError);
@@ -174,7 +191,7 @@ export class FileReadStream extends Readable {
   }
 
   /**
-   * @function _read
+   * @method _read
    * @param size The number of bytes to read.
    */
   public _read(size: number): void {
@@ -186,10 +203,10 @@ export class FileReadStream extends Readable {
         switch (this.readState) {
           case ReadState.PREFIX:
           case ReadState.SUFFIX:
-            this.readPadding(fd, range, size);
+            this.readFilePadding(fd, range, size);
             break;
           case ReadState.RANGE:
-            this.readRange(fd, range, size);
+            this.readFileRange(fd, range, size);
             break;
           default:
             throw new Error(`invalid read state: ${this.readState}`);
@@ -201,7 +218,7 @@ export class FileReadStream extends Readable {
   }
 
   /**
-   * @function _destroy
+   * @method _destroy
    * @param error The error.
    * @param callback The callback.
    */
