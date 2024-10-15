@@ -6,7 +6,7 @@
     "newLine": "lf",
     "jsx": "react-jsx",
     "module": "ESNext",
-    "target": "ES2017",
+    "target": "ES2018",
     "skipLibCheck": true,
     "importHelpers": true,
     "noUnusedLocals": true,
