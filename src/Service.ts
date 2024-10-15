@@ -5,7 +5,6 @@
 import { Stats } from 'fs';
 import createETag from 'etag';
 import { Context } from 'koa';
-import onFinished from 'on-finished';
 import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'path';
 import { FileReadStream } from './utils/stream';
@@ -230,16 +229,11 @@ export default class Service {
       return context.throw(400);
     }
 
-    // Ranges length.
+    // Get stream options.
     const { fs, highWaterMark } = this.options;
+
     // Set response body.
-    const stream = new FileReadStream(path, ranges, { fs, highWaterMark });
-
-    onFinished(context.res, () => {
-      stream.destroy();
-    });
-
-    context.body = stream;
+    context.body = new FileReadStream(path, ranges, { fs, highWaterMark });
 
     // File found.
     return true;
