@@ -11,6 +11,9 @@ importers:
       etag:
         specifier: ^1.8.1
         version: 1.8.1
+      on-finished:
+        specifier: ^2.4.1
+        version: 2.4.1
       range-parser:
         specifier: ^1.2.1
         version: 1.2.1
@@ -21,15 +24,15 @@ importers:
       '@rollup/plugin-typescript':
         specifier: ^12.1.0
         version: 12.1.0(rollup@4.24.0)(tslib@2.7.0)(typescript@5.6.3)
-      '@types/destroy':
-        specifier: ^1.0.3
-        version: 1.0.3
       '@types/etag':
         specifier: ^1.8.3
         version: 1.8.3
       '@types/koa':
         specifier: ^2.15.0
         version: 2.15.0
+      '@types/on-finished':
+        specifier: ^2.3.4
+        version: 2.3.4
       '@types/range-parser':
         specifier: ^1.2.7
         version: 1.2.7
@@ -197,9 +200,6 @@ packages:
   '@types/cookies@0.9.0':
     resolution: {integrity: sha512-40Zk8qR147RABiQ7NQnBzWzDcjKzNrntB5BAmeGCb2p/MIyOE+4BVvc17wumsUqUw00bJYqoXFHYygQnEFh4/Q==}
 
-  '@types/destroy@1.0.3':
-    resolution: {integrity: sha512-nRcH61sRUBct1KM6dV4kjNzgLBrM6eSafsBfoGo/tOeKkTPbYsqi5uJqh8Rq7M9+stYh0wW+Tg56XFcsCPrjhw==}
-
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
@@ -235,6 +235,9 @@ packages:
 
   '@types/node@20.12.12':
     resolution: {integrity: sha512-eWLDGF/FOSPtAvEqeRAQ4C8LSA7M1I7i0ky1I8U7kD1J5ITyW3AsRhQrKVoWf5pFKZ2kILsEGJhsI9r93PYnOw==}
+
+  '@types/on-finished@2.3.4':
+    resolution: {integrity: sha512-Ld4UQD3udYcKPaAWlI1EYXKhefkZcTlpqOLkQRmN3u5Ml/tUypMivUHbNH8LweP4H4FlhGGO+uBjJI1Y1dkE1g==}
 
   '@types/qs@6.9.15':
     resolution: {integrity: sha512-uXHQKES6DQKKCLh441Xv/dwxOq1TVS3JPUMlEqoEglvlhR6Mxnlew/Xq/LRVHpLyk7iK3zODe1qYHIMltO7XGg==}
@@ -847,10 +850,6 @@ snapshots:
       '@types/keygrip': 1.0.6
       '@types/node': 20.12.12
 
-  '@types/destroy@1.0.3':
-    dependencies:
-      '@types/node': 20.12.12
-
   '@types/estree@1.0.5': {}
 
   '@types/estree@1.0.6': {}
@@ -899,6 +898,10 @@ snapshots:
   '@types/node@20.12.12':
     dependencies:
       undici-types: 5.26.5
+
+  '@types/on-finished@2.3.4':
+    dependencies:
+      '@types/node': 20.12.12
 
   '@types/qs@6.9.15': {}
 
