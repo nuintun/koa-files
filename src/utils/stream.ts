@@ -63,11 +63,11 @@ export class FileReadStream extends Readable {
   }
 
   /**
-   * @public
+   * @override
    * @method _construct
    * @param callback The callback.
    */
-  public _construct(callback: Callback): void {
+  override _construct(callback: Callback): void {
     this.fs.open(this.path, 'r', (openError, fd) => {
       if (openError === null) {
         this.fd = fd;
@@ -191,10 +191,11 @@ export class FileReadStream extends Readable {
   }
 
   /**
+   * @override
    * @method _read
    * @param size The number of bytes to read.
    */
-  public _read(size: number): void {
+  override _read(size: number): void {
     if (!this.reading) {
       const { fd } = this;
       const range = this.getRange();
@@ -218,11 +219,12 @@ export class FileReadStream extends Readable {
   }
 
   /**
+   * @override
    * @method _destroy
    * @param error The error.
    * @param callback The callback.
    */
-  public _destroy(error: Error | null, callback: Callback): void {
+  override _destroy(error: Error | null, callback: Callback): void {
     const { fd } = this;
 
     if (fd != null) {
