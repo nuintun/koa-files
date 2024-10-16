@@ -42,6 +42,7 @@ function parseTokens(value: string): string[] {
       case 0x2c:
         // ','.
         tokens.push(value.substring(start, end));
+
         start = end = i + 1;
         break;
       default:
