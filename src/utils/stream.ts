@@ -136,6 +136,7 @@ export class FileReadStream extends Readable {
 
       const { readState } = this;
 
+      // Change read state.
       switch (readState) {
         case ReadState.PREFIX:
           this.readState = ReadState.RANGE;
