@@ -240,7 +240,7 @@ export class FileReadStream extends Readable {
     if (fd != null) {
       this.fd = null;
 
-      // Close the file descriptor.
+      // Close the fd.
       this.fs.close(fd, closeError => {
         callback(error ?? closeError);
       });
