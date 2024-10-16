@@ -1,14 +1,12 @@
 /**
  * @module server
- * @license MIT
- * @author nuintun
  */
 
 import Koa from 'koa';
 import files from 'koa-files';
 
+const port = 80;
 const app = new Koa();
-const port = +process.env.PORT || 80;
 
 /**
  * @function httpError
@@ -32,4 +30,4 @@ app.use(
 app.on('error', error => !httpError(error) && console.error(error));
 
 // Start server
-app.listen(port, () => console.log(`> server running at: http://127.0.0.1:${port}`));
+app.listen(port, () => console.log(`> server running at: http://127.0.0.1`));
