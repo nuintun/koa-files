@@ -35,13 +35,15 @@ interface Callback {
   (error?: Error | null): void;
 }
 
+const DISPOSE_EVENT = Symbol('dispose');
+
 export class FileReadStream extends Readable {
-  private fd?: number;
   private fs: FileSystem;
   private path: PathLike;
   private ranges: Range[];
 
   private bytesRead: number = 0;
+  private fd: number | null = null;
   private reading: boolean = false;
   private currentRangeIndex: number = 0;
   private readState: ReadState = ReadState.PREFIX;
@@ -112,6 +114,7 @@ export class FileReadStream extends Readable {
     const padding = this.getPadding(range);
     const hasRangePadding = padding != null;
 
+    // If padding exists.
     if (hasRangePadding) {
       const { length } = padding;
       const begin = this.bytesRead;
@@ -127,6 +130,7 @@ export class FileReadStream extends Readable {
       }
     }
 
+    // If no padding or read completed.
     if (bytesRead <= 0) {
       this.bytesRead = 0;
 
@@ -166,25 +170,31 @@ export class FileReadStream extends Readable {
 
     const { bytesRead } = this;
     const position = range.offset + bytesRead;
-    const buffer = Buffer.alloc(Math.min(size, range.length - bytesRead));
+    const buffer = Buffer.allocUnsafeSlow(Math.min(size, range.length - bytesRead));
 
+    // Read file range.
     this.fs.read(fd, buffer, 0, buffer.length, position, (readError, bytesRead, buffer) => {
-      if (readError != null) {
-        this.destroy(readError);
+      this.reading = false;
+
+      // Tell ._destroy() that it's safe to close the fd now.
+      if (this.destroyed) {
+        this.emit(DISPOSE_EVENT, readError);
       } else {
-        if (bytesRead > 0) {
-          this.push(buffer.subarray(0, bytesRead));
-
-          this.bytesRead += bytesRead;
+        if (readError != null) {
+          this.destroy(readError);
         } else {
-          this.bytesRead = 0;
-          this.readState = ReadState.SUFFIX;
+          if (bytesRead > 0) {
+            this.push(buffer.subarray(0, bytesRead));
 
-          this.readFilePadding(fd, range, size);
+            this.bytesRead += bytesRead;
+          } else {
+            this.bytesRead = 0;
+            this.readState = ReadState.SUFFIX;
+
+            this.readFilePadding(fd, range, size);
+          }
         }
       }
-
-      this.reading = false;
     });
   }
 
@@ -198,11 +208,13 @@ export class FileReadStream extends Readable {
       const { fd } = this;
       const range = this.getRange();
 
+      // If fd or range is null, finish stream.
       if (fd == null || range == null) {
         this.push(null);
       } else {
         const { readState } = this;
 
+        // Read bytes from range.
         switch (readState) {
           case ReadState.PREFIX:
           case ReadState.SUFFIX:
@@ -217,20 +229,40 @@ export class FileReadStream extends Readable {
   }
 
   /**
+   * @private
+   * @method dispose
+   * @param error The error.
+   * @param callback The callback.
+   */
+  private dispose(error: Error | null, callback: Callback): void {
+    const { fd } = this;
+
+    if (fd != null) {
+      this.fd = null;
+
+      // Close the file descriptor.
+      this.fs.close(fd, closeError => {
+        callback(error ?? closeError);
+      });
+    } else {
+      callback(error);
+    }
+  }
+
+  /**
    * @override
    * @method _destroy
    * @param error The error.
    * @param callback The callback.
    */
   override _destroy(error: Error | null, callback: Callback): void {
-    const { fd } = this;
-
-    if (fd != null) {
-      this.fs.close(fd, closeError => {
-        callback(error ?? closeError);
+    // Wait I/O completion.
+    if (this.reading) {
+      this.once(DISPOSE_EVENT, disposeError => {
+        this.dispose(error ?? disposeError, callback);
       });
     } else {
-      callback(error);
+      this.dispose(error, callback);
     }
   }
 }
