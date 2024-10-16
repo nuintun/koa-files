@@ -11,6 +11,8 @@ import parseRange from 'range-parser';
 
 type Ranges = Range[] | -1 | -2;
 
+const TOKEN_SPLIT_REGEX = /\s*,\s*/;
+
 /**
  * @function isETag
  * @description Check if etag is valid.
@@ -26,37 +28,20 @@ function isETag(value: string): boolean {
  * @param value The tokens value string.
  */
 function parseTokens(value: string): string[] {
-  let end = 0;
-  let start = 0;
+  return value.trim().split(TOKEN_SPLIT_REGEX);
+}
 
-  const { length } = value;
-  const tokens: string[] = [];
-
-  // Gather tokens.
-  for (let i = 0; i < length; i++) {
-    switch (value.charCodeAt(i)) {
-      case 0x20:
-        // ' '.
-        if (start === end) {
-          start = end = i + 1;
-        }
-        break;
-      case 0x2c:
-        // ','.
-        tokens.push(value.substring(start, end));
-
-        start = end = i + 1;
-        break;
-      default:
-        end = i + 1;
-        break;
-    }
+/**
+ * @function decodeURI
+ * @description Decode URI component.
+ * @param URI The URI to decode.
+ */
+export function decodeURI(URI: string): string | -1 {
+  try {
+    return decodeURIComponent(URI);
+  } catch {
+    return -1;
   }
-
-  // Final token.
-  tokens.push(value.substring(start, end));
-
-  return tokens;
 }
 
 /**
@@ -96,19 +81,6 @@ function isETagFresh(match: string, etag: string): boolean {
   return parseTokens(match).some(match => {
     return match === etag || match === 'W/' + etag || 'W/' + match === etag;
   });
-}
-
-/**
- * @function decodeURI
- * @description Decode URI component.
- * @param URI The URI to decode.
- */
-export function decodeURI(URI: string): string | -1 {
-  try {
-    return decodeURIComponent(URI);
-  } catch {
-    return -1;
-  }
 }
 
 /**
