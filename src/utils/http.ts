@@ -28,10 +28,12 @@ function isETag(value: string): boolean {
 function parseTokens(value: string): string[] {
   let end = 0;
   let start = 0;
-  let tokens: string[] = [];
+
+  const { length } = value;
+  const tokens: string[] = [];
 
   // Gather tokens.
-  for (let i = 0, length = value.length; i < length; i++) {
+  for (let i = 0; i < length; i++) {
     switch (value.charCodeAt(i)) {
       case 0x20:
         // ' '.
