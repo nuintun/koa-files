@@ -18,7 +18,7 @@ export interface Options extends Omit<ServiceOptions, 'fs'> {
  * @param {Options} options
  */
 export default function server(root: string, options?: Options): Middleware {
-  const config = { fs, ...options };
+  const config = { fs, highWaterMark: 65536, ...options };
   const service = new Service(root, config);
 
   if (config.defer) {
