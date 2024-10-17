@@ -171,10 +171,10 @@ export class FileReadStream extends Readable {
 
     const { bytesRead } = this;
     const position = range.offset + bytesRead;
-    const buffer = Buffer.allocUnsafeSlow(Math.min(size, range.length - bytesRead));
+    const length = Math.min(size, range.length - bytesRead);
 
     // Read file range.
-    this.fs.read(fd, buffer, 0, buffer.length, position, (readError, bytesRead, buffer) => {
+    this.fs.read(fd, Buffer.allocUnsafeSlow(length), 0, length, position, (readError, bytesRead, buffer) => {
       this.reading = false;
 
       // Tell ._destroy() that it's safe to close the fd now.
