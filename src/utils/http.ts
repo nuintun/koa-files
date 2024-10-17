@@ -172,14 +172,14 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
           // Parsed entries.
           const entries = parsed.entries();
           // Range boundary.
-          const boundary = `<${generate()}>`;
+          const boundary = `${generate(32)}`;
           // Multipart Content-Type.
           const contentType = `Content-Type: ${context.type}`;
           // Range suffix.
           const suffix = Buffer.from(`\r\n--${boundary}--\r\n`);
 
           // Override Content-Type.
-          context.type = `multipart/byteranges; boundary=${boundary}`;
+          context.type = `multipart/byteranges; boundary="${boundary}"`;
 
           // Map ranges.
           for (const [index, { start, end }] of entries) {

@@ -23,7 +23,7 @@ const CHARS: string[] = [
  * @description Generate a hash.
  * @param length The length of hash.
  */
-export function generate(length: number = 32): string {
+export function generate(length: number): string {
   let hash = '';
 
   const randomValues = getRandomValues(new Uint8Array(length));
