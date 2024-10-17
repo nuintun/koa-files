@@ -185,7 +185,7 @@ export class FileReadStream extends Readable {
           this.destroy(readError);
         } else {
           if (bytesRead > 0) {
-            if (bytesRead < buffer.length) {
+            if (bytesRead !== buffer.length) {
               // Slow path. Shrink to fit.
               // Copy instead of slice so that we don't retain
               // large backing buffer for small reads.
