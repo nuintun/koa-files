@@ -40,7 +40,8 @@ export interface FileSystem {
 }
 
 export interface Options {
-  fs: FileSystem;
+  fs?: FileSystem;
+  defer?: boolean;
   etag?: boolean;
   acceptRanges?: boolean;
   lastModified?: boolean;
@@ -64,24 +65,24 @@ export default function server(root: string, options?: Options): Middleware;
 - Defaults to `node:fs`.
 - The file system to used.
 
-##### `headers`
+##### `defer`
 
-- Defaults to `undefined`.
-- Set headers to be sent.
-- See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
-
-##### `acceptRanges`
-
-- Defaults to `true`.
-- Enable or disable accepting ranged requests.
-- Disabling this will not send Accept-Ranges and ignore the contents of the Range request header.
-- Can be overridden by the `headers`.
+- Defaults to `false`.
+- If true, serves after `await next()`.
+- Allowing any downstream middleware to respond first.
 
 ##### `etag`
 
 - Defaults to `true`.
 - Enable or disable etag generation.
 - Use weak etag internally.
+- Can be overridden by the `headers`.
+
+##### `acceptRanges`
+
+- Defaults to `true`.
+- Enable or disable accepting ranged requests.
+- Disabling this will not send Accept-Ranges and ignore the contents of the Range request header.
 - Can be overridden by the `headers`.
 
 ##### `lastModified`
@@ -101,11 +102,11 @@ export default function server(root: string, options?: Options): Middleware;
 - Defaults to `undefined`.
 - Function that determines if a file should be ignored.
 
-##### `defer`
+##### `headers`
 
-- Defaults to `false`.
-- If true, serves after `await next()`.
-- Allowing any downstream middleware to respond first.
+- Defaults to `undefined`.
+- Set headers to be sent.
+- See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
 
 ## Example
 
