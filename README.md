@@ -91,7 +91,7 @@ export default function server(root: string, options?: Options): Middleware;
 
 ##### `highWaterMark`
 
-- Defaults to `node:stream.Readable.highWaterMark`.
+- Defaults to `65536` (64 KiB).
 - Set the high water mark for the read stream.
 
 ##### `ignore`

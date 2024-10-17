@@ -55,7 +55,7 @@ export class FileReadStream extends Readable {
    * @param options The stream options.
    */
   constructor(path: PathLike, ranges: Range[], options: Options) {
-    const { fs, encoding, highWaterMark } = options;
+    const { fs, encoding, highWaterMark = 65536 } = options;
 
     super({ encoding, highWaterMark });
 
