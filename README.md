@@ -18,7 +18,7 @@ $ npm install koa-files
 
 ```ts
 import { Middleware } from 'koa';
-import { createReadStream, stat, Stats } from 'fs';
+import fs, { Stats } from 'node:fs';
 
 interface IgnoreFunction {
   (path: string): boolean;
@@ -32,17 +32,19 @@ interface HeaderFunction {
   (path: string, stats: Stats): Headers | void;
 }
 
-interface FileSystem {
-  readonly stat: typeof stat;
-  readonly createReadStream: typeof createReadStream;
+export interface FileSystem {
+  stat: typeof fs.stat;
+  open: typeof fs.open;
+  read: typeof fs.read;
+  close: typeof fs.close;
 }
 
 export interface Options {
+  fs: FileSystem;
   etag?: boolean;
-  fs?: FileSystem;
-  defer?: boolean;
   acceptRanges?: boolean;
   lastModified?: boolean;
+  highWaterMark?: number;
   ignore?: IgnoreFunction;
   headers?: Headers | HeaderFunction;
 }
