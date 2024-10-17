@@ -27,6 +27,7 @@
     "server",
     "static",
     "service",
+    "multipart",
     "middleware"
   ],
   "engines": {
