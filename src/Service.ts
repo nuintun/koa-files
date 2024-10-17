@@ -2,9 +2,9 @@
  * @module Service
  */
 
-import { Stats } from 'fs';
 import createETag from 'etag';
 import { Context } from 'koa';
+import fs, { Stats } from 'fs';
 import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'path';
 import { FileReadStream } from './utils/stream';
@@ -24,7 +24,7 @@ interface HeaderFunction {
 }
 
 export interface Options {
-  fs: FileSystem;
+  fs?: FileSystem;
   etag?: boolean;
   acceptRanges?: boolean;
   lastModified?: boolean;
@@ -47,7 +47,9 @@ function isFunction(value: unknown): value is Function {
  */
 export default class Service {
   private root: string;
-  private options: Options;
+  private options: Options & {
+    fs: FileSystem;
+  };
 
   /**
    * @constructor
@@ -55,9 +57,9 @@ export default class Service {
    * @param root The file service root.
    * @param options The file service options.
    */
-  constructor(root: string, options: Options) {
-    this.options = options;
+  constructor(root: string, options?: Options) {
     this.root = unixify(resolve(root));
+    this.options = { fs, highWaterMark: 65536, ...options };
   }
 
   /**

@@ -2,13 +2,10 @@
  * @module index
  */
 
-import fs from 'fs';
 import { Middleware } from 'koa';
-import { FileSystem } from './utils/fs';
 import Service, { Options as ServiceOptions } from './Service';
 
-export interface Options extends Omit<ServiceOptions, 'fs'> {
-  fs?: FileSystem;
+export interface Options extends ServiceOptions {
   defer?: boolean;
 }
 
@@ -18,10 +15,9 @@ export interface Options extends Omit<ServiceOptions, 'fs'> {
  * @param {Options} options
  */
 export default function server(root: string, options?: Options): Middleware {
-  const config = { fs, highWaterMark: 65536, ...options };
-  const service = new Service(root, config);
+  const service = new Service(root, options);
 
-  if (config.defer) {
+  if (options?.defer) {
     return async (context, next) => {
       await next();
       await service.respond(context);
