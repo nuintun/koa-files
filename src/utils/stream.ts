@@ -185,7 +185,18 @@ export class FileReadStream extends Readable {
           this.destroy(readError);
         } else {
           if (bytesRead > 0) {
-            this.push(buffer.subarray(0, bytesRead));
+            if (bytesRead < buffer.length) {
+              // Slow path. Shrink to fit.
+              // Copy instead of slice so that we don't retain
+              // large backing buffer for small reads.
+              const chunk = Buffer.allocUnsafeSlow(bytesRead);
+
+              buffer.copy(chunk, 0, 0, bytesRead);
+
+              buffer = chunk;
+            }
+
+            this.push(buffer);
 
             this.bytesRead += bytesRead;
           } else {
