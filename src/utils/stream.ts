@@ -38,9 +38,9 @@ interface Callback {
 const DISPOSE_EVENT = Symbol('dispose');
 
 export class FileReadStream extends Readable {
-  private fs: FileSystem;
-  private path: PathLike;
-  private ranges: Range[];
+  private readonly fs: FileSystem;
+  private readonly path: PathLike;
+  private readonly ranges: Range[];
 
   private bytesRead: number = 0;
   private fd: number | null = null;

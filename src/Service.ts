@@ -46,8 +46,8 @@ function isFunction(value: unknown): value is Function {
  * @class Service
  */
 export default class Service {
-  private root: string;
-  private options: Options & { fs: FileSystem };
+  private readonly root: string;
+  private readonly options: Options & { fs: FileSystem };
 
   /**
    * @constructor
