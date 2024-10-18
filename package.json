@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "3.1.9",
+  "version": "3.1.10",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
