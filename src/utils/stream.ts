@@ -13,22 +13,20 @@ const enum ReadState {
   SUFFIX
 }
 
-export interface Options
-  extends Pick<
-    ReadableOptions,
-    // Encoding.
-    | 'encoding'
-    // High water mark.
-    | 'highWaterMark'
-  > {
-  fs: FileSystem;
-}
-
 export interface Range {
   offset: number;
   length: number;
   prefix?: Buffer;
   suffix?: Buffer;
+}
+
+export interface Options
+  extends Pick<
+    ReadableOptions,
+    // High water mark.
+    'highWaterMark'
+  > {
+  fs: FileSystem;
 }
 
 interface Callback {
@@ -55,9 +53,9 @@ export class FileReadStream extends Readable {
    * @param options The stream options.
    */
   constructor(path: PathLike, ranges: Range[], options: Options) {
-    const { fs, encoding, highWaterMark } = options;
+    const { fs, highWaterMark } = options;
 
-    super({ encoding, highWaterMark });
+    super({ highWaterMark });
 
     this.fs = fs;
     this.path = path;

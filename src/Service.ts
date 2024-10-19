@@ -166,10 +166,8 @@ export default class Service {
 
     // Get options.
     const { options } = this;
-    // Get file system.
-    const { fs } = options;
     // File stats.
-    const stats = await stat(fs, path);
+    const stats = await stat(options.fs, path);
 
     // Check file stats.
     if (
@@ -233,11 +231,8 @@ export default class Service {
       return context.throw(400);
     }
 
-    // Get stream options.
-    const { highWaterMark } = options;
-
     // Set response body.
-    context.body = new FileReadStream(path, ranges, { fs, highWaterMark });
+    context.body = new FileReadStream(path, ranges, options);
 
     // File found.
     return true;
