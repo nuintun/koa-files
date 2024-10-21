@@ -1,10 +1,10 @@
 /**
- * @module stream
+ * @module ReadStream
  */
 
 import { PathLike } from 'fs';
 import { Buffer } from 'buffer';
-import { FileSystem } from './fs';
+import { FileSystem } from './utils/fs';
 import { Readable, ReadableOptions } from 'stream';
 
 const enum ReadState {
@@ -35,7 +35,7 @@ interface Callback {
 
 const DISPOSE_EVENT = Symbol('dispose');
 
-export class FileReadStream extends Readable {
+export class ReadStream extends Readable {
   private readonly fs: FileSystem;
   private readonly path: PathLike;
   private readonly ranges: Range[];
