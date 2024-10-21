@@ -5,9 +5,15 @@
 import { Stats } from 'fs';
 import { Context } from 'koa';
 import { Buffer } from 'buffer';
-import { Range } from './stream';
 import { generate } from './hash';
 import parseRange from 'range-parser';
+
+export interface Range {
+  offset: number;
+  length: number;
+  prefix?: Buffer;
+  suffix?: Buffer;
+}
 
 type Ranges = Range[] | -1 | -2;
 

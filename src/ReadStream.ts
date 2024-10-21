@@ -4,6 +4,7 @@
 
 import { PathLike } from 'fs';
 import { Buffer } from 'buffer';
+import { Range } from './utils/http';
 import { FileSystem } from './utils/fs';
 import { Readable, ReadableOptions } from 'stream';
 
@@ -11,13 +12,6 @@ const enum ReadState {
   PREFIX,
   RANGE,
   SUFFIX
-}
-
-export interface Range {
-  offset: number;
-  length: number;
-  prefix?: Buffer;
-  suffix?: Buffer;
 }
 
 export interface Options
