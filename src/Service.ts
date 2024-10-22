@@ -80,16 +80,15 @@ export default class Service {
    * @param path The file path.
    * @param stats The file stats.
    */
-  private setupHeaders(context: Context, path: string, stats: Stats): void {
+  private setupHeaders({ response }: Context, path: string, stats: Stats): void {
     const { options } = this;
     const { headers } = options;
-    const { response } = context;
 
     // Set status.
-    context.status = 200;
+    response.status = 200;
 
     // Set Content-Type.
-    context.type = extname(path);
+    response.type = extname(path);
 
     // Set headers.
     if (headers) {
@@ -97,37 +96,38 @@ export default class Service {
         const fields = headers(path, stats);
 
         if (fields) {
-          context.set(fields);
+          response.set(fields);
         }
       } else {
-        context.set(headers);
+        response.set(headers);
       }
     }
 
     // Accept-Ranges.
     if (options.acceptRanges === false) {
       // Set Accept-Ranges to none tell client not support.
-      context.set('Accept-Ranges', 'none');
+      response.set('Accept-Ranges', 'none');
     } else {
       // Set Accept-Ranges.
-      context.set('Accept-Ranges', 'bytes');
+      response.set('Accept-Ranges', 'bytes');
     }
 
     // ETag.
     if (options.etag === false) {
       // Remove ETag.
-      context.remove('ETag');
+      response.remove('ETag');
     } else if (!response.get('ETag')) {
-      context.set('ETag', createETag(stats));
+      // Set weak ETag.
+      response.set('ETag', createETag(stats));
     }
 
     // Last-Modified.
     if (options.lastModified === false) {
       // Remove Last-Modified.
-      context.remove('Last-Modified');
+      response.remove('Last-Modified');
     } else if (!response.get('Last-Modified')) {
-      // Set mtime utc string.
-      context.set('Last-Modified', stats.mtime.toUTCString());
+      // Set last modified from mtime.
+      response.set('Last-Modified', stats.mtime.toUTCString());
     }
   }
 
@@ -138,8 +138,8 @@ export default class Service {
    * @param context The koa context.
    */
   public async respond(context: Context): Promise<boolean> {
-    const { root } = this;
-    const { method } = context;
+    const { request } = context;
+    const { method } = request;
 
     // Only support GET and HEAD (405).
     if (method !== 'GET' && method !== 'HEAD') {
@@ -147,13 +147,16 @@ export default class Service {
     }
 
     // Get pathname of file.
-    const pathname = decodeURI(context.path);
+    const pathname = decodeURI(request.path);
 
     // Pathname decode failed or includes null byte(s).
     if (pathname === -1 || pathname.includes('\0')) {
       return context.throw(400);
     }
 
+    // Get service root.
+    const { root } = this;
+    // Get file path.
     const path = unixify(join(root, pathname));
 
     // Malicious path (403).
@@ -183,6 +186,9 @@ export default class Service {
       return false;
     }
 
+    // Koa response.
+    const { response } = context;
+
     // Setup headers.
     this.setupHeaders(context, path, stats);
 
@@ -194,11 +200,11 @@ export default class Service {
       }
 
       // Request fresh (304).
-      if (context.fresh) {
+      if (request.fresh) {
         // Set status.
-        context.status = 304;
+        response.status = 304;
         // Set body null.
-        context.body = null;
+        response.body = null;
 
         // File found.
         return true;
@@ -208,9 +214,9 @@ export default class Service {
     // Head request.
     if (method === 'HEAD') {
       // Set Content-Length.
-      context.length = stats.size;
+      response.length = stats.size;
       // Set body null
-      context.body = null;
+      response.body = null;
 
       // File found.
       return true;
@@ -222,7 +228,7 @@ export default class Service {
     // 416
     if (ranges === -1) {
       // Set Content-Range.
-      context.set('Content-Range', `bytes */${stats.size}`);
+      response.set('Content-Range', `bytes */${stats.size}`);
 
       // Unsatisfiable 416.
       return context.throw(416);
@@ -234,7 +240,7 @@ export default class Service {
     }
 
     // Set response body.
-    context.body = new ReadStream(path, ranges, options);
+    response.body = new ReadStream(path, ranges, options);
 
     // File found.
     return true;

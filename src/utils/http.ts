@@ -51,58 +51,37 @@ export function decodeURI(URI: string): string | -1 {
 }
 
 /**
- * @function isRangeFresh
- * @description Check if request range fresh.
- * @param context Koa context.
- */
-function isRangeFresh(context: Context): boolean {
-  const ifRange = context.get('If-Range');
-
-  // No If-Range.
-  if (!ifRange) {
-    return true;
-  }
-
-  // Koa response.
-  const { response } = context;
-
-  // If-Range as etag.
-  if (isETag(ifRange)) {
-    const etag = response.get('ETag');
-
-    return !!(etag && isETagFresh(ifRange, etag));
-  }
-
-  // If-Range as modified date.
-  const lastModified = response.get('Last-Modified');
-
-  return Date.parse(lastModified) <= Date.parse(ifRange);
-}
-
-/**
- * @function isETagFresh
- * @description Check if etag is fresh.
- * @param match The match value.
- * @param etag The etag value.
- */
-function isETagFresh(match: string, etag: string): boolean {
-  return parseTokens(match).some(match => {
-    return match === etag || match === 'W/' + etag || 'W/' + match === etag;
-  });
-}
-
-/**
  * @function isConditionalGET
  * @description Check if request is conditional GET.
  * @param context The koa context.
  */
-export function isConditionalGET(context: Context): boolean {
+export function isConditionalGET({ request }: Context): boolean {
   return !!(
-    context.get('If-Match') ||
-    context.get('If-None-Match') ||
-    context.get('If-Modified-Since') ||
-    context.get('If-Unmodified-Since')
+    request.get('If-Match') ||
+    request.get('If-None-Match') ||
+    request.get('If-Modified-Since') ||
+    request.get('If-Unmodified-Since')
   );
+}
+
+/**
+ * @function isETagMatching
+ * @description Check if etag is matching.
+ * @param match The match value.
+ * @param etag The etag value.
+ */
+function isETagMatching(match: string, etag: string): boolean {
+  const tokens = parseTokens(match);
+
+  // When tokens not empty compare with etag.
+  if (tokens.length > 0) {
+    return tokens.every(match => {
+      return match === etag || match === `W/${etag}` || `W/${match}` === etag;
+    });
+  }
+
+  // Not match.
+  return false;
 }
 
 /**
@@ -110,32 +89,63 @@ export function isConditionalGET(context: Context): boolean {
  * @description Check if request precondition failure.
  * @param context The koa context.
  */
-export function isPreconditionFailure(context: Context): boolean {
-  // Koa response.
-  const { response } = context;
+export function isPreconditionFailure({ request, response }: Context): boolean {
   // If-Match.
-  const match = context.get('If-Match');
+  const match = request.get('If-Match');
 
   // Check if request match.
   if (match) {
     // Etag.
     const etag = response.get('ETag');
 
-    return !etag || match === '*' || !isETagFresh(match, etag);
+    return !etag || (match !== '*' && !isETagMatching(match, etag));
   }
 
   // If-Unmodified-Since.
-  const unmodifiedSince = Date.parse(context.get('If-Unmodified-Since'));
+  const unmodifiedSinceDate = Date.parse(request.get('If-Unmodified-Since'));
 
   // Check if request unmodified.
-  if (!Number.isNaN(unmodifiedSince)) {
+  if (!Number.isNaN(unmodifiedSinceDate)) {
     // Last-Modified.
-    const lastModified = Date.parse(response.get('Last-Modified'));
+    const lastModifiedDate = Date.parse(response.get('Last-Modified'));
 
-    return Number.isNaN(lastModified) || lastModified > unmodifiedSince;
+    return Number.isNaN(lastModifiedDate) || lastModifiedDate > unmodifiedSinceDate;
   }
 
   // Check precondition passed.
+  return false;
+}
+
+/**
+ * @function isRangeFresh
+ * @description Check if request range fresh.
+ * @param context Koa context.
+ */
+function isRangeFresh({ request, response }: Context): boolean {
+  const ifRange = request.get('If-Range');
+
+  // No If-Range.
+  if (!ifRange) {
+    return true;
+  }
+
+  // If-Range as etag.
+  if (isETag(ifRange)) {
+    const etag = response.get('ETag');
+
+    return !!(etag && isETagMatching(ifRange, etag));
+  }
+
+  // If-Range as modified date.
+  const ifRangeDate = Date.parse(ifRange);
+
+  if (!Number.isNaN(ifRangeDate)) {
+    const lastModifiedDate = Date.parse(response.get('Last-Modified'));
+
+    return !Number.isNaN(lastModifiedDate) && lastModifiedDate === ifRangeDate;
+  }
+
+  // Range not fresh.
   return false;
 }
 
@@ -147,10 +157,11 @@ export function isPreconditionFailure(context: Context): boolean {
  */
 export function parseRanges(context: Context, stats: Stats): Ranges {
   const { size } = stats;
+  const { request, response } = context;
 
   // Range support.
-  if (/^bytes$/i.test(context.response.get('Accept-Ranges'))) {
-    const range = context.get('Range');
+  if (/^bytes$/i.test(response.get('Accept-Ranges'))) {
+    const range = request.get('Range');
 
     // Range fresh.
     if (range && isRangeFresh(context)) {
@@ -166,7 +177,7 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
       // Ranges ok, support multiple ranges.
       if (parsed.type === 'bytes') {
         // Set 206 status.
-        context.status = 206;
+        response.status = 206;
 
         const { length } = parsed;
 
@@ -182,12 +193,12 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
           // Range boundary.
           const boundary = `${generate(32)}`;
           // Multipart Content-Type.
-          const contentType = `Content-Type: ${context.type}`;
+          const contentType = `Content-Type: ${response.type}`;
           // Range suffix.
           const suffix = Buffer.from(`\r\n--${boundary}--\r\n`);
 
           // Override Content-Type.
-          context.type = `multipart/byteranges; boundary="${boundary}"`;
+          response.type = `multipart/byteranges; boundary="${boundary}"`;
 
           // Map ranges.
           for (const [index, { start, end }] of entries) {
@@ -207,7 +218,7 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
           contentLength += suffix.length;
 
           // Set Content-Length.
-          context.length = contentLength;
+          response.length = contentLength;
 
           // The last add suffix boundary.
           ranges[length - 1].suffix = suffix;
@@ -219,10 +230,10 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
           const length = end - start + 1;
 
           // Set Content-Length.
-          context.length = length;
+          response.length = length;
 
           // Set Content-Range.
-          context.set('Content-Range', `bytes ${start}-${end}/${size}`);
+          response.set('Content-Range', `bytes ${start}-${end}/${size}`);
 
           // Return ranges.
           return [{ offset: start, length }];
@@ -232,7 +243,7 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
   }
 
   // Set Content-Length.
-  context.length = size;
+  response.length = size;
 
   // Return ranges.
   return [{ offset: 0, length: size }];
