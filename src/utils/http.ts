@@ -28,6 +28,22 @@ function parseTokens(value: string): string[] {
   return value.trim().split(TOKEN_SPLIT_REGEX);
 }
 
+function parseTokens1(headerValue: string): string[] {
+  const matches: string[] = [];
+  const pattern = /"(.*?)"|([^",\s]+)/g;
+
+  let match: RegExpExecArray | null;
+
+  // Loop to retrieve matching items.
+  while ((match = pattern.exec(headerValue)) != null) {
+    // The value match[1] is a match within quotation marks,
+    // The value match[2] is the non quotation mark part.
+    matches.push(match[1] || match[2]);
+  }
+
+  return matches;
+}
+
 /**
  * @function decodeURI
  * @description Decode URI component.
