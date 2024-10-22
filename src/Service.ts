@@ -82,39 +82,14 @@ export default class Service {
    */
   private setupHeaders(context: Context, path: string, stats: Stats): void {
     const { options } = this;
-    const { headers, etag } = options;
+    const { headers } = options;
+    const { response } = context;
 
     // Set status.
     context.status = 200;
 
     // Set Content-Type.
     context.type = extname(path);
-
-    // Accept-Ranges.
-    if (options.acceptRanges === false) {
-      // Set Accept-Ranges to none tell client not support.
-      context.set('Accept-Ranges', 'none');
-    } else {
-      // Set Accept-Ranges.
-      context.set('Accept-Ranges', 'bytes');
-    }
-
-    // ETag.
-    if (etag === false) {
-      // Remove ETag.
-      context.remove('ETag');
-    } else {
-      context.set('ETag', createETag(stats));
-    }
-
-    // Last-Modified.
-    if (options.lastModified === false) {
-      // Remove Last-Modified.
-      context.remove('Last-Modified');
-    } else {
-      // Set mtime utc string.
-      context.set('Last-Modified', stats.mtime.toUTCString());
-    }
 
     // Set headers.
     if (headers) {
@@ -128,6 +103,32 @@ export default class Service {
         context.set(headers);
       }
     }
+
+    // Accept-Ranges.
+    if (options.acceptRanges === false) {
+      // Set Accept-Ranges to none tell client not support.
+      context.set('Accept-Ranges', 'none');
+    } else {
+      // Set Accept-Ranges.
+      context.set('Accept-Ranges', 'bytes');
+    }
+
+    // ETag.
+    if (options.etag === false) {
+      // Remove ETag.
+      context.remove('ETag');
+    } else if (!response.get('ETag')) {
+      context.set('ETag', createETag(stats));
+    }
+
+    // Last-Modified.
+    if (options.lastModified === false) {
+      // Remove Last-Modified.
+      context.remove('Last-Modified');
+    } else if (!response.get('Last-Modified')) {
+      // Set mtime utc string.
+      context.set('Last-Modified', stats.mtime.toUTCString());
+    }
   }
 
   /**
@@ -138,9 +139,10 @@ export default class Service {
    */
   public async respond(context: Context): Promise<boolean> {
     const { root } = this;
+    const { method } = context;
 
     // Only support GET and HEAD (405).
-    if (context.method !== 'GET' && context.method !== 'HEAD') {
+    if (method !== 'GET' && method !== 'HEAD') {
       return false;
     }
 
@@ -204,7 +206,7 @@ export default class Service {
     }
 
     // Head request.
-    if (context.method === 'HEAD') {
+    if (method === 'HEAD') {
       // Set Content-Length.
       context.length = stats.size;
       // Set body null

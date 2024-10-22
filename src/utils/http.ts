@@ -56,13 +56,15 @@ export function decodeURI(URI: string): string | -1 {
  * @param context Koa context.
  */
 function isRangeFresh(context: Context): boolean {
-  const { request, response } = context;
-  const ifRange = request.get('If-Range');
+  const ifRange = context.get('If-Range');
 
   // No If-Range.
   if (!ifRange) {
     return true;
   }
+
+  // Koa response.
+  const { response } = context;
 
   // If-Range as etag.
   if (isETag(ifRange)) {
@@ -95,13 +97,11 @@ function isETagFresh(match: string, etag: string): boolean {
  * @param context The koa context.
  */
 export function isConditionalGET(context: Context): boolean {
-  const { request } = context;
-
   return !!(
-    request.get('If-Match') ||
-    request.get('If-None-Match') ||
-    request.get('If-Modified-Since') ||
-    request.get('If-Unmodified-Since')
+    context.get('If-Match') ||
+    context.get('If-None-Match') ||
+    context.get('If-Modified-Since') ||
+    context.get('If-Unmodified-Since')
   );
 }
 
@@ -110,9 +110,11 @@ export function isConditionalGET(context: Context): boolean {
  * @description Check if request precondition failure.
  * @param context The koa context.
  */
-export function isPreconditionFailure({ request, response }: Context): boolean {
+export function isPreconditionFailure(context: Context): boolean {
+  // Koa response.
+  const { response } = context;
   // If-Match.
-  const match = request.get('If-Match');
+  const match = context.get('If-Match');
 
   // Check if request match.
   if (match) {
@@ -123,7 +125,7 @@ export function isPreconditionFailure({ request, response }: Context): boolean {
   }
 
   // If-Unmodified-Since.
-  const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
+  const unmodifiedSince = Date.parse(context.get('If-Unmodified-Since'));
 
   // Check if request unmodified.
   if (!Number.isNaN(unmodifiedSince)) {
@@ -148,7 +150,7 @@ export function parseRanges(context: Context, stats: Stats): Ranges {
 
   // Range support.
   if (/^bytes$/i.test(context.response.get('Accept-Ranges'))) {
-    const range = context.request.get('Range');
+    const range = context.get('Range');
 
     // Range fresh.
     if (range && isRangeFresh(context)) {
