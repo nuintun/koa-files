@@ -30,6 +30,7 @@ function parseTokens(value: string): string[] {
 }
 
 // https://github.com/oakserver/commons/blob/main/range.ts#L583
+// https://github.com/vintl-dev/vintl/blob/main/src/sources/header.ts#L18
 // https://github.com/sstur/xcurl/blob/main/src/support/parseHeaderValue.ts
 // https://github.com/hattipjs/deno-release/blob/fe809a4/src/headers/parser.ts
 // https://github.com/hattipjs/hattip/blob/main/packages/base/headers/src/parser.ts
