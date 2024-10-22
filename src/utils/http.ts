@@ -20,15 +20,6 @@ type Ranges = Range[] | -1 | -2;
 const TOKEN_SPLIT_REGEX = /\s*,\s*/;
 
 /**
- * @function isETag
- * @description Check if etag is valid.
- * @param value The value to check.
- */
-function isETag(value: string): boolean {
-  return /^(?:W\/)?"[\s\S]+"$/.test(value);
-}
-
-/**
  * @function parseTokens
  * @description Parse HTTP tokens.
  * @param value The tokens value string.
@@ -71,17 +62,7 @@ export function isConditionalGET({ request }: Context): boolean {
  * @param etag The etag value.
  */
 function isETagMatching(match: string, etag: string): boolean {
-  const tokens = parseTokens(match);
-
-  // When tokens not empty compare with etag.
-  if (tokens.length > 0) {
-    return tokens.every(match => {
-      return match === etag || match === `W/${etag}` || `W/${match}` === etag;
-    });
-  }
-
-  // Not match.
-  return false;
+  return match === etag || match === `W/${etag}` || `W/${match}` === etag;
 }
 
 /**
@@ -98,7 +79,7 @@ export function isPreconditionFailure({ request, response }: Context): boolean {
     // Etag.
     const etag = response.get('ETag');
 
-    return !etag || (match !== '*' && !isETagMatching(match, etag));
+    return !etag || (match !== '*' && !parseTokens(match).some(token => isETagMatching(token, etag)));
   }
 
   // If-Unmodified-Since.
@@ -129,15 +110,15 @@ function isRangeFresh({ request, response }: Context): boolean {
     return true;
   }
 
+  // If-Range as modified date.
+  const ifRangeDate = Date.parse(ifRange);
+
   // If-Range as etag.
-  if (isETag(ifRange)) {
+  if (Number.isNaN(ifRangeDate)) {
     const etag = response.get('ETag');
 
     return !!(etag && isETagMatching(ifRange, etag));
   }
-
-  // If-Range as modified date.
-  const ifRangeDate = Date.parse(ifRange);
 
   if (!Number.isNaN(ifRangeDate)) {
     const lastModifiedDate = Date.parse(response.get('Last-Modified'));
