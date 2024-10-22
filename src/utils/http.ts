@@ -18,6 +18,7 @@ export interface Range {
 type Ranges = Range[] | -1 | -2;
 
 const TOKEN_SPLIT_REGEX = /\s*,\s*/;
+const ETAG_RE = /(?:W\/)?"[ !#-\x7E\x80-\xFF]+"/;
 
 /**
  * @function parseTokens
