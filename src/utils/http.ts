@@ -70,6 +70,7 @@ function isETagMatch(match: string, etag: string, isIfMatch?: boolean): boolean 
       return true;
     }
 
+    // If-Match maybe a list of etag.
     return match.split(SPLIT_ETAG_RE).includes(etag);
   }
 
