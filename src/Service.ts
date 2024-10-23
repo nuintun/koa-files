@@ -9,7 +9,7 @@ import { ReadStream } from './ReadStream';
 import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'path';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
-import { decodeURI, isConditionalGET, isPreconditionFailure, parseRanges } from './utils/http';
+import { decodeURI, isConditionalGET, isPreconditionFailed, parseRanges } from './utils/http';
 
 interface IgnoreFunction {
   (path: string): boolean;
@@ -194,8 +194,8 @@ export default class Service {
 
     // Conditional get support.
     if (isConditionalGET(context)) {
-      // Request precondition failure.
-      if (isPreconditionFailure(context)) {
+      // Request precondition failed.
+      if (isPreconditionFailed(context)) {
         return context.throw(412);
       }
 

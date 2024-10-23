@@ -15,40 +15,9 @@ export interface Range {
   suffix?: Buffer;
 }
 
-type Ranges = Range[] | -1 | -2;
-
-const TOKEN_SPLIT_REGEX = /\s*,\s*/;
-const ETAG_RE = /(?:W\/)?"[ !#-\x7E\x80-\xFF]+"/;
-
-/**
- * @function parseTokens
- * @description Parse HTTP tokens.
- * @param value The tokens value string.
- */
-function parseTokens(value: string): string[] {
-  return value.trim().split(TOKEN_SPLIT_REGEX);
-}
-
-// https://github.com/oakserver/commons/blob/main/range.ts#L583
-// https://github.com/vintl-dev/vintl/blob/main/src/sources/header.ts#L18
-// https://github.com/sstur/xcurl/blob/main/src/support/parseHeaderValue.ts
-// https://github.com/hattipjs/deno-release/blob/fe809a4/src/headers/parser.ts
-// https://github.com/hattipjs/hattip/blob/main/packages/base/headers/src/parser.ts
-function parseTokens1(headerValue: string): string[] {
-  const matches: string[] = [];
-  const pattern = /"(.*?)"|([^",\s]+)/g;
-
-  let match: RegExpExecArray | null;
-
-  // Loop to retrieve matching items.
-  while ((match = pattern.exec(headerValue)) != null) {
-    // The value match[1] is a match within quotation marks,
-    // The value match[2] is the non quotation mark part.
-    matches.push(match[1] || match[2]);
-  }
-
-  return matches;
-}
+const WEAK_ETAG_RE = /^W\/$/;
+const SPLIT_ETAG_RE = /\s*,\s*/;
+const STAR_ETAG_RE = /^\s*\*\s*$/;
 
 /**
  * @function decodeURI
@@ -78,30 +47,53 @@ export function isConditionalGET({ request }: Context): boolean {
 }
 
 /**
- * @function isETagMatching
- * @description Check if etag is matching.
- * @param match The match value.
- * @param etag The etag value.
+ * @function ifMatch
+ * @see https://httpwg.org/specs/rfc9110.html#rfc.section.13.1.1
+ * @param match The if-match header.
+ * @param etag The etag header.
  */
-function isETagMatching(match: string, etag: string): boolean {
-  return match === etag || match === `W/${etag}` || `W/${match}` === etag;
+function ifMatch(match: string, etag: string): boolean {
+  // Weak tags cannot be matched and return false.
+  if (!etag || WEAK_ETAG_RE.test(match)) {
+    return false;
+  }
+
+  if (STAR_ETAG_RE.test(match)) {
+    return true;
+  }
+
+  const tags = match.split(SPLIT_ETAG_RE);
+
+  return tags.includes(etag.trim());
 }
 
 /**
- * @function isPreconditionFailure
- * @description Check if request precondition failure.
+ * @function ifETagRange
+ * @see https://httpwg.org/specs/rfc9110.html#field.if-range
+ * @param range The if-range header.
+ * @param etag The etag header.
+ */
+function ifETagRange(range: string, etag: string): boolean {
+  // Weak tags cannot be matched and return false.
+  if (!etag || WEAK_ETAG_RE.test(range)) {
+    return false;
+  }
+
+  return range.trim() === etag.trim();
+}
+
+/**
+ * @function isPreconditionFailed
+ * @description Check if request precondition failed.
  * @param context The koa context.
  */
-export function isPreconditionFailure({ request, response }: Context): boolean {
+export function isPreconditionFailed({ request, response }: Context): boolean {
   // If-Match.
   const match = request.get('If-Match');
 
   // Check if request match.
   if (match) {
-    // Etag.
-    const etag = response.get('ETag');
-
-    return !etag || (match !== '*' && !parseTokens(match).some(token => isETagMatching(token, etag)));
+    return !ifMatch(match, response.get('ETag'));
   }
 
   // If-Unmodified-Since.
@@ -135,21 +127,14 @@ function isRangeFresh({ request, response }: Context): boolean {
   // If-Range as modified date.
   const ifRangeDate = Date.parse(ifRange);
 
-  // If-Range as etag.
+  // If-Range as modified date failed.
   if (Number.isNaN(ifRangeDate)) {
-    const etag = response.get('ETag');
-
-    return !!(etag && isETagMatching(ifRange, etag));
+    return ifETagRange(ifRange, response.get('ETag'));
   }
 
-  if (!Number.isNaN(ifRangeDate)) {
-    const lastModifiedDate = Date.parse(response.get('Last-Modified'));
+  const lastModifiedDate = Date.parse(response.get('Last-Modified'));
 
-    return !Number.isNaN(lastModifiedDate) && lastModifiedDate === ifRangeDate;
-  }
-
-  // Range not fresh.
-  return false;
+  return !Number.isNaN(lastModifiedDate) && lastModifiedDate === ifRangeDate;
 }
 
 /**
@@ -158,7 +143,7 @@ function isRangeFresh({ request, response }: Context): boolean {
  * @param context The koa context.
  * @param stats The file stats.
  */
-export function parseRanges(context: Context, stats: Stats): Ranges {
+export function parseRanges(context: Context, stats: Stats): Range[] | -1 | -2 {
   const { size } = stats;
   const { request, response } = context;
 
