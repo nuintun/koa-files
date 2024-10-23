@@ -15,9 +15,8 @@ export interface Range {
   suffix?: Buffer;
 }
 
-const WEAK_ETAG_RE = /^W\/$/;
 const SPLIT_ETAG_RE = /\s*,\s*/;
-const STAR_ETAG_RE = /^\s*\*\s*$/;
+const SINGLE_ETAG_RE = /^(?:W\/)?"[ !#-\x7E\x80-\xFF]+"$/;
 
 /**
  * @function decodeURI
@@ -47,39 +46,35 @@ export function isConditionalGET({ request }: Context): boolean {
 }
 
 /**
- * @function ifMatch
- * @see https://httpwg.org/specs/rfc9110.html#rfc.section.13.1.1
- * @param match The if-match header.
- * @param etag The etag header.
+ * @function isETagMatch
+ * @see https://httpwg.org/specs/rfc9110.html
+ * @param match The match value.
+ * @param etag The etag value.
+ * @param isIfMatch The flag of if-match.
  */
-function ifMatch(match: string, etag: string): boolean {
+function isETagMatch(match: string, etag: string, isIfMatch?: boolean): boolean {
+  // Trim etag.
+  etag = etag.trim();
+
   // Weak tags cannot be matched and return false.
-  if (!etag || WEAK_ETAG_RE.test(match)) {
+  if (!etag || etag.startsWith('W/')) {
     return false;
   }
 
-  if (STAR_ETAG_RE.test(match)) {
-    return true;
+  // Trim match.
+  match = match.trim();
+
+  // Check If-Match.
+  if (isIfMatch) {
+    if (match === '*') {
+      return true;
+    }
+
+    return match.split(SPLIT_ETAG_RE).includes(etag);
   }
 
-  const tags = match.split(SPLIT_ETAG_RE);
-
-  return tags.includes(etag.trim());
-}
-
-/**
- * @function ifETagRange
- * @see https://httpwg.org/specs/rfc9110.html#field.if-range
- * @param range The if-range header.
- * @param etag The etag header.
- */
-function ifETagRange(range: string, etag: string): boolean {
-  // Weak tags cannot be matched and return false.
-  if (!etag || WEAK_ETAG_RE.test(range)) {
-    return false;
-  }
-
-  return range.trim() === etag.trim();
+  // Check If-Range.
+  return match === etag;
 }
 
 /**
@@ -89,22 +84,21 @@ function ifETagRange(range: string, etag: string): boolean {
  */
 export function isPreconditionFailed({ request, response }: Context): boolean {
   // If-Match.
-  const match = request.get('If-Match');
+  const ifMatch = request.get('If-Match');
 
-  // Check if request match.
-  if (match) {
-    return !ifMatch(match, response.get('ETag'));
+  // Check If-Match.
+  if (ifMatch) {
+    return !isETagMatch(ifMatch, response.get('ETag'), true);
   }
 
   // If-Unmodified-Since.
-  const unmodifiedSinceDate = Date.parse(request.get('If-Unmodified-Since'));
+  const unmodifiedSince = Date.parse(request.get('If-Unmodified-Since'));
 
-  // Check if request unmodified.
-  if (!Number.isNaN(unmodifiedSinceDate)) {
-    // Last-Modified.
-    const lastModifiedDate = Date.parse(response.get('Last-Modified'));
+  // Check If-Unmodified-Since.
+  if (!Number.isNaN(unmodifiedSince)) {
+    const lastModified = Date.parse(response.get('Last-Modified'));
 
-    return Number.isNaN(lastModifiedDate) || lastModifiedDate > unmodifiedSinceDate;
+    return Number.isNaN(lastModified) || lastModified > unmodifiedSince;
   }
 
   // Check precondition passed.
@@ -124,17 +118,13 @@ function isRangeFresh({ request, response }: Context): boolean {
     return true;
   }
 
-  // If-Range as modified date.
-  const ifRangeDate = Date.parse(ifRange);
-
   // If-Range as modified date failed.
-  if (Number.isNaN(ifRangeDate)) {
-    return ifETagRange(ifRange, response.get('ETag'));
+  if (SINGLE_ETAG_RE.test(ifRange)) {
+    return isETagMatch(ifRange, response.get('ETag'));
   }
 
-  const lastModifiedDate = Date.parse(response.get('Last-Modified'));
-
-  return !Number.isNaN(lastModifiedDate) && lastModifiedDate === ifRangeDate;
+  // Check if Last-Modified is valid and equal to If-Range date
+  return Date.parse(response.get('Last-Modified')) <= Date.parse(ifRange);
 }
 
 /**

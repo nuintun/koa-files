@@ -19,8 +19,8 @@ interface Headers {
   [key: string]: string | string[];
 }
 
-interface HeaderFunction {
-  (path: string, stats: Stats): Headers | void;
+interface HeadersFunction {
+  (path: string, stats: Stats): Promise<Headers | void> | Headers | void;
 }
 
 export interface Options {
@@ -30,7 +30,7 @@ export interface Options {
   lastModified?: boolean;
   highWaterMark?: number;
   ignore?: IgnoreFunction;
-  headers?: Headers | HeaderFunction;
+  headers?: Headers | HeadersFunction;
 }
 
 /**
@@ -80,7 +80,7 @@ export default class Service {
    * @param path The file path.
    * @param stats The file stats.
    */
-  private setupHeaders({ response }: Context, path: string, stats: Stats): void {
+  private async setupHeaders({ response }: Context, path: string, stats: Stats): Promise<void> {
     const { options } = this;
     const { headers } = options;
 
@@ -93,7 +93,7 @@ export default class Service {
     // Set headers.
     if (headers) {
       if (isFunction(headers)) {
-        const fields = headers(path, stats);
+        const fields = await headers(path, stats);
 
         if (fields) {
           response.set(fields);
@@ -190,7 +190,7 @@ export default class Service {
     const { response } = context;
 
     // Setup headers.
-    this.setupHeaders(context, path, stats);
+    await this.setupHeaders(context, path, stats);
 
     // Conditional get support.
     if (isConditionalGET(context)) {

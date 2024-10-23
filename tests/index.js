@@ -20,8 +20,10 @@ function httpError(error) {
 // Static files server
 app.use(
   files('tests', {
-    headers: {
-      'Cache-Control': 'public, max-age=31557600'
+    async headers() {
+      return {
+        Server: `Node/${process.version.slice(1)}`
+      };
     }
   })
 );

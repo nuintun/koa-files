@@ -28,8 +28,8 @@ interface Headers {
   [key: string]: string | string[];
 }
 
-interface HeaderFunction {
-  (path: string, stats: Stats): Headers | void;
+interface HeadersFunction {
+  (path: string, stats: Stats): Promise<Headers | void> | Headers | void;
 }
 
 export interface FileSystem {
@@ -47,7 +47,7 @@ export interface Options {
   lastModified?: boolean;
   highWaterMark?: number;
   ignore?: IgnoreFunction;
-  headers?: Headers | HeaderFunction;
+  headers?: Headers | HeadersFunction;
 }
 
 export default function server(root: string, options?: Options): Middleware;
