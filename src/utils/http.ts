@@ -177,7 +177,8 @@ export function parseRanges(context: Context, stats: Stats): Range[] | -1 | -2 {
           const suffix = Buffer.from(`\r\n--${boundary}--\r\n`);
 
           // Override Content-Type.
-          response.type = `multipart/byteranges; boundary="${boundary}"`;
+          // https://httpwg.org/specs/rfc9110.html#multipart.byteranges
+          response.type = `multipart/byteranges; boundary=${boundary}`;
 
           // Map ranges.
           for (const [index, { start, end }] of entries) {
