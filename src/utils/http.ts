@@ -188,7 +188,7 @@ export function parseRanges(context: Context, stats: Stats): Range[] | -1 | -2 {
             const prefix = Buffer.from(`${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`);
 
             // Compute Content-Length
-            contentLength += length + prefix.length;
+            contentLength += prefix.length + length;
 
             // Cache range.
             ranges.push({ offset: start, length, prefix });
