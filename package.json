@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -57,7 +57,7 @@
   "dependencies": {
     "etag": "^1.8.1",
     "range-parser": "^1.2.1",
-    "tslib": "^2.8.0"
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.1",
