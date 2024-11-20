@@ -63,7 +63,7 @@
     "@rollup/plugin-typescript": "^12.1.1",
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.9.1",
     "@types/range-parser": "^1.2.7",
     "koa": "^2.15.3",
     "magic-string": "^0.30.13",
