@@ -63,15 +63,15 @@
     "@rollup/plugin-typescript": "^12.1.1",
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
-    "@types/node": "^22.9.1",
+    "@types/node": "^22.9.3",
     "@types/range-parser": "^1.2.7",
     "koa": "^2.15.3",
     "magic-string": "^0.30.13",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
-    "rollup": "^4.27.3",
+    "rollup": "^4.27.4",
     "tsc-alias": "^1.8.10",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   },
   "peerDependencies": {
     "koa": "^2.0.0"
