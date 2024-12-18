@@ -17,7 +17,7 @@ function httpError(error) {
   return /^(EOF|EPIPE|ECANCELED|ECONNRESET|ECONNABORTED)$/i.test(error.code);
 }
 
-// Static files server
+// Static files server.
 app.use(
   server('tests', {
     async headers() {
@@ -28,8 +28,8 @@ app.use(
   })
 );
 
-// Listen error event
+// Listen error event.
 app.on('error', error => !httpError(error) && console.error(error));
 
-// Start server
+// Start server.
 app.listen(port, () => console.log(`> server running at: http://127.0.0.1`));
