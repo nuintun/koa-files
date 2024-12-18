@@ -3,7 +3,7 @@
  */
 
 import { Middleware } from 'koa';
-import Service, { Options as ServiceOptions } from './Service';
+import { Options as ServiceOptions, Service } from './Service';
 
 export interface Options extends ServiceOptions {
   defer?: boolean;
