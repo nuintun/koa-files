@@ -4,4 +4,4 @@
 
 import { rimraf } from 'rimraf';
 
-rimraf.sync(['cjs', 'esm', 'types']);
+await rimraf(['cjs', 'esm', 'types']);
