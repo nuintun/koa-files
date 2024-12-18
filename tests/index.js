@@ -3,7 +3,7 @@
  */
 
 import Koa from 'koa';
-import files from 'koa-files';
+import { server } from 'koa-files';
 
 const port = 80;
 const app = new Koa();
@@ -19,7 +19,7 @@ function httpError(error) {
 
 // Static files server
 app.use(
-  files('tests', {
+  server('tests', {
     async headers() {
       return {
         Server: `Node/${process.version.slice(1)}`

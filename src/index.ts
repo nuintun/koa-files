@@ -11,10 +11,11 @@ export interface Options extends ServiceOptions {
 
 /**
  * @function server
- * @param {string} root
- * @param {Options} options
+ * @description Create files server.
+ * @param {string} root The files server root.
+ * @param {Options} options The files server options.
  */
-export default function server(root: string, options?: Options): Middleware {
+export function server(root: string, options?: Options): Middleware {
   const service = new Service(root, options);
 
   if (options?.defer) {

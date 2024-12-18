@@ -6,17 +6,18 @@ import createETag from 'etag';
 import { Context } from 'koa';
 import fs, { Stats } from 'fs';
 import { ReadStream } from './ReadStream';
+import { isFunction } from './utils/type';
 import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'path';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
 import { decodeURI, isConditionalGET, isPreconditionFailed, parseRanges } from './utils/http';
 
-interface IgnoreFunction {
-  (path: string): boolean;
-}
-
 interface Headers {
   [key: string]: string | string[];
+}
+
+interface IgnoreFunction {
+  (path: string): boolean | Promise<boolean>;
 }
 
 interface HeadersFunction {
@@ -31,15 +32,6 @@ export interface Options {
   highWaterMark?: number;
   ignore?: IgnoreFunction;
   headers?: Headers | HeadersFunction;
-}
-
-/**
- * @function isFunction
- * @description Check if value is function.
- * @param value The value to check.
- */
-function isFunction(value: unknown): value is Function {
-  return typeof value === 'function';
 }
 
 /**
@@ -66,10 +58,11 @@ export class Service {
    * @description Check if path is ignore.
    * @param path The path to check.
    */
-  private isIgnore(path: string): boolean {
+  private async isIgnore(path: string): Promise<boolean> {
     const { ignore } = this.options;
+    const isIgnored = isFunction(ignore) ? await ignore(path) : false;
 
-    return (isFunction(ignore) ? ignore(path) : false) === true;
+    return isIgnored === true;
   }
 
   /**
@@ -165,7 +158,7 @@ export class Service {
     }
 
     // Is ignore path or file (403).
-    if (this.isIgnore(path)) {
+    if (await this.isIgnore(path)) {
       return false;
     }
 

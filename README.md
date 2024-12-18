@@ -20,12 +20,12 @@ $ npm install koa-files
 import { Middleware } from 'koa';
 import fs, { Stats } from 'node:fs';
 
-interface IgnoreFunction {
-  (path: string): boolean;
-}
-
 interface Headers {
   [key: string]: string | string[];
+}
+
+interface IgnoreFunction {
+  (path: string): boolean | Promise<boolean>;
 }
 
 interface HeadersFunction {
@@ -50,7 +50,7 @@ export interface Options {
   headers?: Headers | HeadersFunction;
 }
 
-export default function server(root: string, options?: Options): Middleware;
+export function server(root: string, options?: Options): Middleware;
 ```
 
 ### root
@@ -118,14 +118,14 @@ export default function server(root: string, options?: Options): Middleware;
  */
 
 import Koa from 'koa';
-import files from 'koa-files';
+import { server } from 'koa-files';
 
 const app = new Koa();
 const port = process.env.PORT || 80;
 
 // Static files server
 app.use(
-  files('tests', {
+  server('tests', {
     headers: {
       'Cache-Control': 'public, max-age=31557600'
     }
