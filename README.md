@@ -7,6 +7,7 @@
 > [![Download Status][download-image]][npm-url]
 > [![Languages Status][languages-image]][github-url]
 > ![Node Version][node-image]
+> [![License][license-image]][license-url]
 
 ## Installation
 
@@ -166,3 +167,5 @@ MIT
 [languages-image]: https://img.shields.io/github/languages/top/nuintun/koa-files?style=flat-square
 [github-url]: https://github.com/nuintun/koa-files
 [node-image]: https://img.shields.io/node/v/koa-files.svg?style=flat-square
+[license-image]: https://img.shields.io/github/license/nuintun/koa-files?style=flat-square
+[license-url]: https://github.com/nuintun/koa-files/blob/main/LICENSE
