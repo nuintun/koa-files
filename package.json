@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -64,7 +64,7 @@
     "@types/koa": "^2.15.0",
     "@types/node": "^22.10.2",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^1.0.1",
+    "dts-paths": "^1.0.3",
     "koa": "^2.15.3",
     "magic-string": "^0.30.17",
     "prettier": "^3.4.2",
