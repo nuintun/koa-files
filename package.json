@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "import": "./esm/index.js",
-      "require": "./cjs/index.cjs"
+      "require": "./cjs/index.cjs",
+      "default": "./esm/index.js"
     }
   },
   "files": [
@@ -62,9 +63,9 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.13.14",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^1.1.4",
+    "dts-paths": "^1.1.5",
     "koa": "^2.16.0",
     "magic-string": "^0.30.17",
     "prettier": "^3.5.3",
