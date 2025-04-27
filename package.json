@@ -63,7 +63,7 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/etag": "^1.8.3",
     "@types/koa": "^2.15.0",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.15.2",
     "@types/range-parser": "^1.2.7",
     "dts-paths": "^1.1.6",
     "koa": "^2.16.1",

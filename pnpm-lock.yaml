@@ -28,8 +28,8 @@ importers:
         specifier: ^2.15.0
         version: 2.15.0
       '@types/node':
-        specifier: ^22.14.1
-        version: 22.14.1
+        specifier: ^22.15.2
+        version: 22.15.2
       '@types/range-parser':
         specifier: ^1.2.7
         version: 1.2.7
@@ -246,8 +246,8 @@ packages:
   '@types/mime@1.3.5':
     resolution: {integrity: sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==}
 
-  '@types/node@22.14.1':
-    resolution: {integrity: sha512-u0HuPQwe/dHrItgHHpmw3N2fYCR6x4ivMNbPHRkBVP4CvN+kiRrKHWk3i8tXiO/joPwXLMYvF9TTF0eqgHIuOw==}
+  '@types/node@22.15.2':
+    resolution: {integrity: sha512-uKXqKN9beGoMdBfcaTY1ecwz6ctxuJAcUlwE55938g0ZJ8lRxwAZqRz2AJ4pzpt5dHdTPMB863UZ0ESiFUcP7A==}
 
   '@types/qs@6.9.18':
     resolution: {integrity: sha512-kK7dgTYDyGqS+e2Q4aK9X3D7q234CIZ1Bv0q/7Z5IwRDoADNU81xXJK/YVyLbLTZCoIwUoDoffFeF+p/eIklAA==}
@@ -446,8 +446,8 @@ packages:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
     engines: {node: '>= 6'}
 
-  glob@11.0.1:
-    resolution: {integrity: sha512-zrQDm8XPnYEKawJScsnM0QzobJxlT/kHOOlRTio8IH/GrmxRE5fjllkzdaHclIuNjUQTJYH2xHNIGfdpJkDJUw==}
+  glob@11.0.2:
+    resolution: {integrity: sha512-YT7U7Vye+t5fZ/QMkBFrTJ7ZQxInIUjwyAjVj84CYXqgBdv30MFUPGnBR6sQaVq6Is15wYJUsnzTuWaGRBhBAQ==}
     engines: {node: 20 || >=22}
     hasBin: true
 
@@ -855,16 +855,16 @@ snapshots:
 
   '@types/accepts@1.3.7':
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/body-parser@1.19.5':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/content-disposition@0.5.8': {}
 
@@ -873,17 +873,17 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/express': 5.0.1
       '@types/keygrip': 1.0.6
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/estree@1.0.7': {}
 
   '@types/etag@1.8.3':
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/express-serve-static-core@5.0.6':
     dependencies:
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
       '@types/qs': 6.9.18
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
@@ -913,11 +913,11 @@ snapshots:
       '@types/http-errors': 2.0.4
       '@types/keygrip': 1.0.6
       '@types/koa-compose': 3.2.8
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/mime@1.3.5': {}
 
-  '@types/node@22.14.1':
+  '@types/node@22.15.2':
     dependencies:
       undici-types: 6.21.0
 
@@ -928,12 +928,12 @@ snapshots:
   '@types/send@0.17.4':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
 
   '@types/serve-static@1.15.7':
     dependencies:
       '@types/http-errors': 2.0.4
-      '@types/node': 22.14.1
+      '@types/node': 22.15.2
       '@types/send': 0.17.4
 
   accepts@1.3.8:
@@ -1103,7 +1103,7 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
-  glob@11.0.1:
+  glob@11.0.2:
     dependencies:
       foreground-child: 3.3.1
       jackspeak: 4.1.0
@@ -1290,7 +1290,7 @@ snapshots:
 
   rimraf@6.0.1:
     dependencies:
-      glob: 11.0.1
+      glob: 11.0.2
       package-json-from-dist: 1.0.1
 
   rollup@4.40.0:
