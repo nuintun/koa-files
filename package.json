@@ -1,6 +1,6 @@
 {
   "name": "koa-files",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "A static files serving middleware for koa.",
   "type": "module",
   "main": "cjs/index.cjs",
@@ -74,6 +74,6 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "koa": "^2.0.0"
+    "koa": ">=2.0.0"
   }
 }
