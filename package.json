@@ -65,7 +65,7 @@
     "@types/koa": "^2.15.0",
     "@types/node": "^22.15.19",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^1.1.6",
+    "dts-paths": "^1.1.7",
     "koa": "^3.0.0",
     "magic-string": "^0.30.17",
     "prettier": "^3.5.3",
