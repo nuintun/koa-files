@@ -61,16 +61,16 @@
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.2",
-    "@types/etag": "^1.8.3",
+    "@types/etag": "^1.8.4",
     "@types/koa": "^2.15.0",
-    "@types/node": "^22.15.29",
+    "@types/node": "^24.0.1",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^1.1.7",
+    "dts-paths": "^1.1.8",
     "koa": "^3.0.0",
     "magic-string": "^0.30.17",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
-    "rollup": "^4.41.1",
+    "rollup": "^4.43.0",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
