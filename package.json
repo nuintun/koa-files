@@ -60,17 +60,17 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@types/etag": "^1.8.4",
     "@types/koa": "^2.15.0",
-    "@types/node": "^24.0.1",
+    "@types/node": "^24.0.10",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^1.1.8",
+    "dts-paths": "^1.1.9",
     "koa": "^3.0.0",
     "magic-string": "^0.30.17",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.43.0",
+    "rollup": "^4.44.2",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
