@@ -63,14 +63,14 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/etag": "^1.8.4",
     "@types/koa": "^2.15.0",
-    "@types/node": "^24.0.12",
+    "@types/node": "^24.1.0",
     "@types/range-parser": "^1.2.7",
     "dts-paths": "^1.1.10",
     "koa": "^3.0.0",
     "magic-string": "^0.30.17",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.44.2",
+    "rollup": "^4.45.1",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
