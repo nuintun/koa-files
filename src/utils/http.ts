@@ -134,7 +134,7 @@ function isRangeFresh({ request, response }: Context): boolean {
  * @param context The koa context.
  * @param stats The file stats.
  */
-export function parseRanges(context: Context, stats: Stats): Range[] | -1 | -2 {
+export function parseRanges(context: Context, stats: Stats): -1 | -2 | Range[] {
   const { size } = stats;
   const { request, response } = context;
 
