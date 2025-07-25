@@ -168,14 +168,14 @@ export class ReadStream extends Readable {
       const position = range.offset + bytesRead;
 
       // Read file range.
-      this.fs.read(fd, buffer, 0, bytesToRead, position, (error, bytesRead, buffer) => {
+      this.fs.read(fd, buffer, 0, bytesToRead, position, (readError, bytesRead, buffer) => {
         this.reading = false;
 
         // Tell ._destroy() that it's safe to close the fd now.
         if (this.destroyed) {
-          this.emit(DISPOSE_EVENT, error);
-        } else if (error != null) {
-          this.destroy(error);
+          this.emit(DISPOSE_EVENT, readError);
+        } else if (readError != null) {
+          this.destroy(readError);
         } else if (bytesRead !== bytesToRead) {
           this.destroy(new RangeError('invalid read operation'));
         } else {
