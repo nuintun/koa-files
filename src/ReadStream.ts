@@ -95,12 +95,12 @@ export class ReadStream extends Readable {
 
   /**
    * @private
-   * @method readFilePadding
+   * @method readPadding
    * @param fd The file descriptor.
    * @param range The current range.
    * @param size The number of bytes to read.
    */
-  private readFilePadding(fd: number, range: Range, size: number): void {
+  private readPadding(fd: number, range: Range, size: number): void {
     let bytesRead = 0;
 
     const padding = this.getPadding(range);
@@ -111,7 +111,7 @@ export class ReadStream extends Readable {
       const { length } = padding;
       const begin = this.bytesRead;
 
-      if (length > 0 && begin < length) {
+      if (begin < length) {
         bytesRead = Math.min(size, length - begin);
 
         const end = begin + bytesRead;
@@ -123,7 +123,7 @@ export class ReadStream extends Readable {
     }
 
     // If no padding or read completed.
-    if (bytesRead <= 0) {
+    if (!hasRangePadding || bytesRead < size) {
       this.bytesRead = 0;
 
       const { readState } = this;
@@ -133,7 +133,7 @@ export class ReadStream extends Readable {
         case ReadState.PREFIX:
           this.readState = ReadState.RANGE;
 
-          this.readFileRange(fd, range, size);
+          this.readFileRange(fd, range, size - bytesRead);
           break;
         case ReadState.SUFFIX:
           this.currentRangeIndex++;
@@ -144,7 +144,7 @@ export class ReadStream extends Readable {
           if (nextRange == null) {
             this.push(null);
           } else {
-            this.readFilePadding(fd, nextRange, size);
+            this.readPadding(fd, nextRange, size - bytesRead);
           }
           break;
       }
@@ -159,47 +159,50 @@ export class ReadStream extends Readable {
    * @param size The number of bytes to read.
    */
   private readFileRange(fd: number, range: Range, size: number): void {
-    this.reading = true;
-
+    const { length } = range;
     const { bytesRead } = this;
-    const position = range.offset + bytesRead;
-    const buffer = Buffer.allocUnsafeSlow(Math.min(size, range.length - bytesRead));
 
-    // Read file range.
-    this.fs.read(fd, buffer, 0, buffer.length, position, (readError, bytesRead, buffer) => {
-      this.reading = false;
+    // File range not finished.
+    if (bytesRead < length) {
+      this.reading = true;
 
-      // Tell ._destroy() that it's safe to close the fd now.
-      if (this.destroyed) {
-        this.emit(DISPOSE_EVENT, readError);
-      } else {
-        if (readError != null) {
-          this.destroy(readError);
+      const bytesToRead = Math.min(size, length - bytesRead);
+      const buffer = Buffer.allocUnsafeSlow(bytesToRead);
+      const position = range.offset + bytesRead;
+
+      // Read file range.
+      this.fs.read(fd, buffer, 0, bytesToRead, position, (error, bytesRead, buffer) => {
+        this.reading = false;
+
+        // Tell ._destroy() that it's safe to close the fd now.
+        if (this.destroyed) {
+          this.emit(DISPOSE_EVENT, error);
         } else {
-          if (bytesRead > 0) {
-            if (bytesRead !== buffer.length) {
-              // Slow path. Shrink to fit.
-              // Copy instead of slice so that we don't retain
-              // large backing buffer for small reads.
-              const chunk = Buffer.allocUnsafeSlow(bytesRead);
-
-              buffer.copy(chunk, 0, 0, bytesRead);
-
-              buffer = chunk;
-            }
-
+          if (error != null) {
+            this.destroy(error);
+          } else if (bytesRead !== bytesToRead) {
+            this.destroy(new RangeError('invalid read operation'));
+          } else {
             this.push(buffer);
 
             this.bytesRead += bytesRead;
-          } else {
-            this.bytesRead = 0;
-            this.readState = ReadState.SUFFIX;
 
-            this.readFilePadding(fd, range, size);
+            // file range read completed.
+            if (bytesRead < size) {
+              this.bytesRead = 0;
+              this.readState = ReadState.SUFFIX;
+
+              this.readPadding(fd, range, size - bytesRead);
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      this.bytesRead = 0;
+      this.readState = ReadState.SUFFIX;
+
+      this.readPadding(fd, range, size);
+    }
   }
 
   /**
@@ -222,7 +225,7 @@ export class ReadStream extends Readable {
         switch (readState) {
           case ReadState.PREFIX:
           case ReadState.SUFFIX:
-            this.readFilePadding(fd, range, size);
+            this.readPadding(fd, range, size);
             break;
           case ReadState.RANGE:
             this.readFileRange(fd, range, size);
