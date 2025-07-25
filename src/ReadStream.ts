@@ -104,10 +104,9 @@ export class ReadStream extends Readable {
     let bytesRead = 0;
 
     const padding = this.getPadding(range);
-    const hasRangePadding = padding != null;
 
     // If padding exists.
-    if (hasRangePadding) {
+    if (padding != null) {
       const { length } = padding;
       const begin = this.bytesRead;
 
@@ -123,13 +122,11 @@ export class ReadStream extends Readable {
     }
 
     // If no padding or read completed.
-    if (!hasRangePadding || bytesRead < size) {
+    if (bytesRead < size) {
       this.bytesRead = 0;
 
-      const { readState } = this;
-
       // Change read state.
-      switch (readState) {
+      switch (this.readState) {
         case ReadState.PREFIX:
           this.readState = ReadState.RANGE;
 
@@ -177,23 +174,21 @@ export class ReadStream extends Readable {
         // Tell ._destroy() that it's safe to close the fd now.
         if (this.destroyed) {
           this.emit(DISPOSE_EVENT, error);
+        } else if (error != null) {
+          this.destroy(error);
+        } else if (bytesRead !== bytesToRead) {
+          this.destroy(new RangeError('invalid read operation'));
         } else {
-          if (error != null) {
-            this.destroy(error);
-          } else if (bytesRead !== bytesToRead) {
-            this.destroy(new RangeError('invalid read operation'));
-          } else {
-            this.push(buffer);
+          this.push(buffer);
 
-            this.bytesRead += bytesRead;
+          this.bytesRead += bytesRead;
 
-            // file range read completed.
-            if (bytesRead < size) {
-              this.bytesRead = 0;
-              this.readState = ReadState.SUFFIX;
+          // file range read completed.
+          if (bytesRead < size) {
+            this.bytesRead = 0;
+            this.readState = ReadState.SUFFIX;
 
-              this.readPadding(fd, range, size - bytesRead);
-            }
+            this.readPadding(fd, range, size - bytesRead);
           }
         }
       });
@@ -219,10 +214,8 @@ export class ReadStream extends Readable {
       if (fd == null || range == null) {
         this.push(null);
       } else {
-        const { readState } = this;
-
         // Read bytes from range.
-        switch (readState) {
+        switch (this.readState) {
           case ReadState.PREFIX:
           case ReadState.SUFFIX:
             this.readPadding(fd, range, size);
