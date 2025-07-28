@@ -45,7 +45,8 @@ export class Service {
   private readonly root: string;
   private readonly options: Options & {
     fs: FileSystem;
-    highWaterMark: number | HighWaterMarkFunction;
+    ignore: IgnoreFunction;
+    highWaterMark: HighWaterMarkFunction;
   };
 
   /**
@@ -57,44 +58,14 @@ export class Service {
   constructor(root: string, options: Options = {}) {
     this.root = unixify(resolve(root));
 
+    const { ignore, highWaterMark } = options;
+
     this.options = {
       ...options,
       fs: options.fs ?? fs,
-      highWaterMark: options.highWaterMark ?? 65536
+      ignore: isFunction(ignore) ? ignore : () => false,
+      highWaterMark: isFunction(highWaterMark) ? highWaterMark : () => 65536
     };
-  }
-
-  /**
-   * @private
-   * @method isIgnore
-   * @description Check if path is ignore.
-   * @param path The path to check.
-   */
-  private isIgnore(path: string): Promise<boolean> | boolean {
-    const { ignore } = this.options;
-
-    if (isFunction(ignore)) {
-      return ignore(path);
-    }
-
-    return false;
-  }
-
-  /**
-   * @private
-   * @method getHighWaterMark
-   * @description Get highWaterMark.
-   * @param path
-   * @param stats
-   */
-  private getHighWaterMark(path: string, stats: Stats): Promise<number> | number {
-    const { highWaterMark } = this.options;
-
-    if (isFunction(highWaterMark)) {
-      return highWaterMark(path, stats);
-    }
-
-    return highWaterMark;
   }
 
   /**
@@ -189,13 +160,14 @@ export class Service {
       return false;
     }
 
+    // Get options.
+    const { options } = this;
+
     // Is ignore path or file (403).
-    if (await this.isIgnore(path)) {
+    if (await options.ignore(path)) {
       return false;
     }
 
-    // Get options.
-    const { options } = this;
     // File stats.
     const stats = await stat(options.fs, path);
 
@@ -267,7 +239,7 @@ export class Service {
     // Set response body.
     response.body = new ReadStream(path, ranges, {
       fs: options.fs,
-      highWaterMark: await this.getHighWaterMark(path, stats)
+      highWaterMark: await options.highWaterMark(path, stats)
     });
 
     // File found.
