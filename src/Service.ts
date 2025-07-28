@@ -17,7 +17,7 @@ interface Headers {
 }
 
 interface IgnoreFunction {
-  (path: string): boolean | Promise<boolean>;
+  (path: string): Promise<boolean> | boolean;
 }
 
 interface HighWaterMarkFunction {
