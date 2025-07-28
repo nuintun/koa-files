@@ -29,6 +29,10 @@ interface IgnoreFunction {
   (path: string): boolean | Promise<boolean>;
 }
 
+interface HighWaterMarkFunction {
+  (path: string, stats: Stats): number | Promise<number>;
+}
+
 interface HeadersFunction {
   (path: string, stats: Stats): Promise<Headers | void> | Headers | void;
 }
@@ -41,14 +45,14 @@ export interface FileSystem {
 }
 
 export interface Options {
-  fs?: FileSystem;
-  defer?: boolean;
   etag?: boolean;
+  defer?: boolean;
+  fs?: FileSystem;
   acceptRanges?: boolean;
   lastModified?: boolean;
-  highWaterMark?: number;
   ignore?: IgnoreFunction;
   headers?: Headers | HeadersFunction;
+  highWaterMark?: number | HighWaterMarkFunction;
 }
 
 export function server(root: string, options?: Options): Middleware;

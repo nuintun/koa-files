@@ -20,18 +20,22 @@ interface IgnoreFunction {
   (path: string): boolean | Promise<boolean>;
 }
 
+interface HighWaterMarkFunction {
+  (path: string, stats: Stats): number | Promise<number>;
+}
+
 interface HeadersFunction {
   (path: string, stats: Stats): Promise<Headers | void> | Headers | void;
 }
 
 export interface Options {
-  fs?: FileSystem;
   etag?: boolean;
+  fs?: FileSystem;
   acceptRanges?: boolean;
   lastModified?: boolean;
-  highWaterMark?: number;
   ignore?: IgnoreFunction;
   headers?: Headers | HeadersFunction;
+  highWaterMark?: number | HighWaterMarkFunction;
 }
 
 /**
@@ -232,8 +236,13 @@ export class Service {
       return context.throw(400);
     }
 
+    const { highWaterMark } = options;
+
     // Set response body.
-    response.body = new ReadStream(path, ranges, options);
+    response.body = new ReadStream(path, ranges, {
+      fs: options.fs,
+      highWaterMark: isFunction(highWaterMark) ? await highWaterMark(path, stats) : highWaterMark
+    });
 
     // File found.
     return true;
