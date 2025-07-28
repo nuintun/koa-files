@@ -21,7 +21,7 @@ interface IgnoreFunction {
 }
 
 interface HighWaterMarkFunction {
-  (path: string, stats: Stats): number | Promise<number>;
+  (path: string, stats: Stats): Promise<number> | number;
 }
 
 interface HeadersFunction {
@@ -43,7 +43,10 @@ export interface Options {
  */
 export class Service {
   private readonly root: string;
-  private readonly options: Options & { fs: FileSystem };
+  private readonly options: Options & {
+    fs: FileSystem;
+    highWaterMark: number | HighWaterMarkFunction;
+  };
 
   /**
    * @constructor
@@ -51,9 +54,14 @@ export class Service {
    * @param root The file service root.
    * @param options The file service options.
    */
-  constructor(root: string, options?: Options) {
+  constructor(root: string, options: Options = {}) {
     this.root = unixify(resolve(root));
-    this.options = { fs, highWaterMark: 65536, ...options };
+
+    this.options = {
+      ...options,
+      fs: options.fs ?? fs,
+      highWaterMark: options.highWaterMark ?? 65536
+    };
   }
 
   /**
@@ -62,11 +70,31 @@ export class Service {
    * @description Check if path is ignore.
    * @param path The path to check.
    */
-  private async isIgnore(path: string): Promise<boolean> {
+  private isIgnore(path: string): Promise<boolean> | boolean {
     const { ignore } = this.options;
-    const isIgnored = isFunction(ignore) ? await ignore(path) : false;
 
-    return isIgnored === true;
+    if (isFunction(ignore)) {
+      return ignore(path);
+    }
+
+    return false;
+  }
+
+  /**
+   * @private
+   * @method getHighWaterMark
+   * @description Get highWaterMark.
+   * @param path
+   * @param stats
+   */
+  private getHighWaterMark(path: string, stats: Stats): Promise<number> | number {
+    const { highWaterMark } = this.options;
+
+    if (isFunction(highWaterMark)) {
+      return highWaterMark(path, stats);
+    }
+
+    return highWaterMark;
   }
 
   /**
@@ -236,12 +264,10 @@ export class Service {
       return context.throw(400);
     }
 
-    const { highWaterMark } = options;
-
     // Set response body.
     response.body = new ReadStream(path, ranges, {
       fs: options.fs,
-      highWaterMark: isFunction(highWaterMark) ? await highWaterMark(path, stats) : highWaterMark
+      highWaterMark: await this.getHighWaterMark(path, stats)
     });
 
     // File found.

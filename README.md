@@ -30,7 +30,7 @@ interface IgnoreFunction {
 }
 
 interface HighWaterMarkFunction {
-  (path: string, stats: Stats): number | Promise<number>;
+  (path: string, stats: Stats): Promise<number> | number;
 }
 
 interface HeadersFunction {
