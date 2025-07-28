@@ -46,6 +46,7 @@ export class Service {
   private readonly options: Options & {
     fs: FileSystem;
     ignore: IgnoreFunction;
+    headers: HeadersFunction;
     highWaterMark: HighWaterMarkFunction;
   };
 
@@ -58,12 +59,13 @@ export class Service {
   constructor(root: string, options: Options = {}) {
     this.root = unixify(resolve(root));
 
-    const { ignore, highWaterMark = 65536 } = options;
+    const { ignore, headers, highWaterMark = 65536 } = options;
 
     this.options = {
       ...options,
       fs: options.fs ?? fs,
       ignore: isFunction(ignore) ? ignore : () => false,
+      headers: isFunction(headers) ? headers : () => headers,
       highWaterMark: isFunction(highWaterMark) ? highWaterMark : () => highWaterMark
     };
   }
@@ -78,7 +80,6 @@ export class Service {
    */
   private async setupHeaders({ response }: Context, path: string, stats: Stats): Promise<void> {
     const { options } = this;
-    const { headers } = options;
 
     // Set status.
     response.status = 200;
@@ -86,17 +87,12 @@ export class Service {
     // Set Content-Type.
     response.type = extname(path);
 
-    // Set headers.
-    if (headers) {
-      if (isFunction(headers)) {
-        const fields = await headers(path, stats);
+    // Get headers.
+    const headers = await options.headers(path, stats);
 
-        if (fields) {
-          response.set(fields);
-        }
-      } else {
-        response.set(headers);
-      }
+    // If headers not empty, set headers.
+    if (headers) {
+      response.set(headers);
     }
 
     // Accept-Ranges.
