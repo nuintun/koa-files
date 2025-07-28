@@ -58,13 +58,13 @@ export class Service {
   constructor(root: string, options: Options = {}) {
     this.root = unixify(resolve(root));
 
-    const { ignore, highWaterMark } = options;
+    const { ignore, highWaterMark = 65536 } = options;
 
     this.options = {
       ...options,
       fs: options.fs ?? fs,
       ignore: isFunction(ignore) ? ignore : () => false,
-      highWaterMark: isFunction(highWaterMark) ? highWaterMark : () => 65536
+      highWaterMark: isFunction(highWaterMark) ? highWaterMark : () => highWaterMark
     };
   }
 
