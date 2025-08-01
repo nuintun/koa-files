@@ -14,8 +14,7 @@
     "resolveJsonModule": true,
     "noImplicitOverride": true,
     "noUnusedParameters": true,
-    "moduleResolution": "bundler",
-    "forceConsistentCasingInFileNames": true
+    "moduleResolution": "bundler"
   },
   "include": [
     "src/**/*"
