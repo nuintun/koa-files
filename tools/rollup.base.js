@@ -2,7 +2,6 @@
  * @module rollup.base
  */
 
-import treeShake from './plugins/tree-shake.js';
 import typescript from '@rollup/plugin-typescript';
 import { createRequire, isBuiltin } from 'node:module';
 
@@ -47,8 +46,7 @@ export default function rollup(esnext) {
       typescript({
         declaration: true,
         declarationDir: esnext ? 'esm' : 'cjs'
-      }),
-      treeShake()
+      })
     ],
     onwarn(error, warn) {
       if (error.code !== 'CIRCULAR_DEPENDENCY') {
