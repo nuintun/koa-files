@@ -14,7 +14,7 @@ export interface FileSystem {
 /**
  * @function stat
  * @description Get file stats.
- * @param fs The file system to used.
+ * @param fs The file system to use.
  * @param path The file path.
  */
 export function stat(fs: FileSystem, path: string): Promise<Stats | null> {

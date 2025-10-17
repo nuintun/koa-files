@@ -68,7 +68,7 @@ export function server(root: string, options?: Options): Middleware;
 ##### `fs`
 
 - Defaults to `node:fs`.
-- The file system to used.
+- The file system to use.
 
 ##### `defer`
 
