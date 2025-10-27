@@ -60,16 +60,16 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^12.1.4",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/etag": "^1.8.4",
-    "@types/koa": "^3.0.0",
-    "@types/node": "^24.7.2",
+    "@types/koa": "^3.0.1",
+    "@types/node": "^24.9.1",
     "@types/range-parser": "^1.2.7",
     "dts-paths": "^1.1.13",
-    "koa": "^3.0.1",
+    "koa": "^3.1.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.52.4",
+    "rollup": "^4.52.5",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
