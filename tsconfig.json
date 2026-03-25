@@ -17,7 +17,12 @@
     "moduleResolution": "bundler",
     "types": [
       "node"
-    ]
+    ],
+    "paths": {
+      "/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
     "./src/**/*"
