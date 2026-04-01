@@ -9,7 +9,7 @@
 > ![Node Version][node-image]
 > [![License][license-image]][license-url]
 
-## Installation
+## Install
 
 ```bash
 $ npm install koa-files
