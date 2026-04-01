@@ -2,7 +2,15 @@
  * @module fix-types
  */
 
+import { isBuiltin } from 'node:module';
 import { resolvePaths } from 'dts-paths';
+import type { OnResolveFailed } from 'dts-paths';
+
+const onResolveFailed: OnResolveFailed = ({ specifier, importer }) => {
+  if (!isBuiltin(specifier)) {
+    throw new Error(`failed to resolve '${specifier}' from '${importer}'`);
+  }
+};
 
 Promise.all([
   resolvePaths('cjs', {
@@ -17,7 +25,8 @@ Promise.all([
     },
     mapExtension({ importer }) {
       return importer ? '.cjs' : '.cts';
-    }
+    },
+    onResolveFailed
   }),
   resolvePaths('esm', {
     tsconfig: {
@@ -28,7 +37,8 @@ Promise.all([
           '/*': ['./esm/*']
         }
       }
-    }
+    },
+    onResolveFailed
   })
 ]).then(
   ([cjs, esm]) => {
