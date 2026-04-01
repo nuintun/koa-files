@@ -2,7 +2,7 @@
  * @module path
  */
 
-import { isAbsolute, relative } from 'path';
+import { isAbsolute, relative } from 'node:path';
 
 /**
  * @function unixify

@@ -2,7 +2,7 @@
  * @module fs
  */
 
-import fs, { Stats } from 'fs';
+import fs, { Stats } from 'node:fs';
 
 export interface FileSystem {
   stat: typeof fs.stat;

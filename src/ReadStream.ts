@@ -2,10 +2,10 @@
  * @module ReadStream
  */
 
-import { PathLike } from 'fs';
-import { Buffer } from 'buffer';
-import { Readable } from 'stream';
+import { PathLike } from 'node:fs';
+import { Buffer } from 'node:buffer';
 import { Range } from './utils/http';
+import { Readable } from 'node:stream';
 import { FileSystem } from './utils/fs';
 
 const enum ReadState {

@@ -31,7 +31,7 @@ Promise.all([
     }
   })
 ]).then(
-  ([esm, cjs]) => {
+  ([cjs, esm]) => {
     console.log(`fix cjs types: ${cjs.size} files`);
     console.log(`fix esm types: ${esm.size} files`);
   },

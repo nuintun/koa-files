@@ -2,7 +2,7 @@
  * @module hash
  */
 
-import { getRandomValues } from 'crypto';
+import { getRandomValues } from 'node:crypto';
 
 // prettier-ignore
 const CHARS: string[] = [

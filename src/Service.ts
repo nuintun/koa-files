@@ -4,11 +4,11 @@
 
 import createETag from 'etag';
 import { Context } from 'koa';
-import fs, { Stats } from 'fs';
+import fs, { Stats } from 'node:fs';
 import { ReadStream } from './ReadStream';
 import { isFunction } from './utils/type';
 import { FileSystem, stat } from './utils/fs';
-import { extname, join, resolve } from 'path';
+import { extname, join, resolve } from 'node:path';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
 import { decodeURI, isConditionalGET, isPreconditionFailed, parseRanges } from './utils/http';
 

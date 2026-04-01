@@ -2,10 +2,10 @@
  * @module http
  */
 
-import { Stats } from 'fs';
 import { Context } from 'koa';
-import { Buffer } from 'buffer';
+import { Stats } from 'node:fs';
 import { generate } from './hash';
+import { Buffer } from 'node:buffer';
 import parseRange from 'range-parser';
 
 export interface Range {
