@@ -185,7 +185,9 @@ export function parseRanges(context: Context, stats: Stats): -1 | -2 | Range[] {
             const length = end - start + 1;
             const head = index > 0 ? '\r\n' : '';
             const contentRange = `Content-Range: bytes ${start}-${end}/${size}`;
-            const prefix = Buffer.from(`${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`);
+            const prefix = Buffer.from(
+              `${head}--${boundary}\r\n${contentType}\r\n${contentRange}\r\n\r\n`
+            );
 
             // Compute Content-Length
             contentLength += prefix.length + length;
