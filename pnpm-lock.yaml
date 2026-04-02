@@ -34,8 +34,8 @@ importers:
         specifier: ^1.2.7
         version: 1.2.7
       dts-paths:
-        specifier: ^2.2.0
-        version: 2.2.0(typescript@6.0.2)
+        specifier: ^2.2.1
+        version: 2.2.1(typescript@6.0.2)
       koa:
         specifier: ^3.2.0
         version: 3.2.0
@@ -303,8 +303,8 @@ packages:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
-  dts-paths@2.2.0:
-    resolution: {integrity: sha512-gNXKnAtb3iTCtE5AwIik2gdPJEgDVkh9xJxrtFJu2gdb3Iv1IpRxj4Z+iGIrqllPpAfgDlY9NA1bVOfxnh1NVw==}
+  dts-paths@2.2.1:
+    resolution: {integrity: sha512-ftfo1dMnp6FS/0BiEJm3AGo9DnrE0aw7X3WLPKUBwDVFbC4v5lgJIgsKgDmQRhBQdB3L0T0c7hSjneVAfo/XoQ==}
     peerDependencies:
       typescript: '>=5.0.0'
 
@@ -715,7 +715,7 @@ snapshots:
 
   destroy@1.2.0: {}
 
-  dts-paths@2.2.0(typescript@6.0.2):
+  dts-paths@2.2.1(typescript@6.0.2):
     dependencies:
       magic-string: 0.30.21
       p-limit: 7.3.0

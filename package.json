@@ -3,8 +3,7 @@
   "version": "5.0.0",
   "description": "A static files serving middleware for koa.",
   "type": "module",
-  "main": "cjs/index.cjs",
-  "module": "esm/index.js",
+  "sideEffects": false,
   "exports": {
     ".": {
       "import": "./esm/index.js",
@@ -66,7 +65,7 @@
     "@types/koa": "^3.0.2",
     "@types/node": "^25.5.0",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^2.2.0",
+    "dts-paths": "^2.2.1",
     "koa": "^3.2.0",
     "prettier": "^3.8.1",
     "rimraf": "^6.1.3",

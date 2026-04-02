@@ -49,6 +49,7 @@ export default function rollup(esnext = false): RollupOptions {
     },
     plugins: [
       typescript({
+        rootDir: 'src',
         declaration: true,
         declarationDir: esnext ? 'esm' : 'cjs'
       })
