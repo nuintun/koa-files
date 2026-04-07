@@ -42,8 +42,8 @@ export interface Options {
  * @class Service
  */
 export class Service {
-  private readonly root: string;
-  private readonly options: Options & {
+  readonly #root: string;
+  readonly #options: Options & {
     fs: FileSystem;
     ignore: IgnoreFunction;
     headers: HeadersFunction;
@@ -57,11 +57,11 @@ export class Service {
    * @param options The file service options.
    */
   constructor(root: string, options: Options = {}) {
-    this.root = unixify(resolve(root));
+    this.#root = unixify(resolve(root));
 
     const { ignore, headers, highWaterMark = 65536 } = options;
 
-    this.options = {
+    this.#options = {
       ...options,
       fs: options.fs ?? fs,
       ignore: isFunction(ignore) ? ignore : () => false,
@@ -79,7 +79,7 @@ export class Service {
    * @param stats The file stats.
    */
   private async setupHeaders({ response }: Context, path: string, stats: Stats): Promise<void> {
-    const { options } = this;
+    const options = this.#options;
 
     // Set status.
     response.status = 200;
@@ -147,7 +147,7 @@ export class Service {
     }
 
     // Get service root.
-    const { root } = this;
+    const root = this.#root;
     // Get file path.
     const path = unixify(join(root, pathname));
 
@@ -157,7 +157,7 @@ export class Service {
     }
 
     // Get options.
-    const { options } = this;
+    const options = this.#options;
 
     // Is ignore path or file (403).
     if (await options.ignore(path)) {
