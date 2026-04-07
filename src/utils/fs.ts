@@ -3,37 +3,24 @@
  */
 
 import { Stats } from 'node:fs';
+import { Buffer } from 'node:buffer';
 
-type TBuffer = NodeJS.ArrayBufferView;
-
-interface CloseCallback {
-  (error: Error | null): void;
-}
-
-interface OpenCallback {
-  (error: Error | null, fd: number): void;
-}
-
-interface StatCallback {
-  (error: Error | null, stats: Stats): void;
-}
-
-interface ReadCallback<T extends TBuffer> {
-  (error: Error | null, bytesRead: number, buffer: T): void;
+interface Callback<T extends unknown[] = []> {
+  (error: Error | null, ...args: T): void;
 }
 
 export interface FileSystem {
-  read<T extends TBuffer>(
+  close(fd: number, callback: Callback): void;
+  read<T extends Buffer<ArrayBuffer>>(
     fd: number,
     buffer: T,
     offset: number,
     length: number,
     position: number,
-    callback: ReadCallback<T>
+    callback: Callback<[bytesRead: number, buffer: T]>
   ): void;
-  close(fd: number, callback: CloseCallback): void;
-  stat(path: string, callback: StatCallback): void;
-  open(path: string, flags: string, callback: OpenCallback): void;
+  stat(path: string, callback: Callback<[stats: Stats]>): void;
+  open(path: string, flags: string, callback: Callback<[fd: number]>): void;
 }
 
 /**
