@@ -15,11 +15,32 @@
 $ npm install koa-files
 ```
 
+## Quick start
+
+```ts
+import Koa from 'koa';
+import { server } from 'koa-files';
+
+const app = new Koa();
+
+app.use(
+  server('public', {
+    headers: {
+      'Cache-Control': 'public, max-age=31536000, immutable'
+    }
+  })
+);
+
+app.listen(3000);
+```
+
+Then visit `http://127.0.0.1:3000/app.js` to serve `public/app.js`.
+
 ## API
 
 ```ts
 import { Middleware } from 'koa';
-import fs, { Stats } from 'node:fs';
+import { PathLike, Stats } from 'node:fs';
 
 interface Headers {
   [key: string]: string | string[];
@@ -38,10 +59,21 @@ interface HeadersFunction {
 }
 
 export interface FileSystem {
-  stat: typeof fs.stat;
-  open: typeof fs.open;
-  read: typeof fs.read;
-  close: typeof fs.close;
+  close(fd: number, callback?: (error?: Error | null) => void): void;
+  read<T extends ArrayBufferView>(
+    fd: number,
+    buffer: T,
+    offset: number,
+    length: number,
+    position: number | bigint | null,
+    callback: (error: Error | null | undefined, bytesRead: number, buffer: T) => void
+  ): void;
+  stat(path: PathLike, callback: (error: Error | null | undefined, stats: Stats) => void): void;
+  open(
+    path: PathLike,
+    flags: string | number | undefined,
+    callback: (error: Error | null | undefined, fd: number) => void
+  ): void;
 }
 
 export interface Options {
@@ -62,6 +94,7 @@ export function server(root: string, options?: Options): Middleware;
 
 - Root directory string.
 - Nothing above this root directory can be served.
+- `root` is resolved with `path.resolve`, so relative paths are based on the process working directory.
 
 ### Options
 
@@ -75,6 +108,7 @@ export function server(root: string, options?: Options): Middleware;
 - Defaults to `false`.
 - If true, serves after `await next()`.
 - Allowing any downstream middleware to respond first.
+- Useful when you want route handlers to take priority over static files.
 
 ##### `etag`
 
@@ -101,17 +135,28 @@ export function server(root: string, options?: Options): Middleware;
 
 - Defaults to `65536` (64 KiB).
 - Set the high water mark for the read stream.
+- Supports function form to customize by file path and stats.
 
 ##### `ignore`
 
 - Defaults to `undefined`.
 - Function that determines if a file should be ignored.
+- Return `true` to skip static serving for the current file.
 
 ##### `headers`
 
 - Defaults to `undefined`.
 - Set headers to be sent.
 - See docs: [Headers in MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers).
+- Supports function form to compute headers dynamically.
+
+### Behavior notes
+
+- Only `GET` and `HEAD` requests are handled.
+- `Range` requests are supported (including multipart range responses).
+- Conditional requests are supported via `ETag` and `Last-Modified`.
+- Requests containing invalid paths (e.g. null bytes) respond with `400`.
+- Files outside `root` are never served.
 
 ## Example
 
@@ -157,9 +202,48 @@ app.listen(port, () => {
 });
 ```
 
+## More examples
+
+### Prefer application routes first (`defer: true`)
+
+```ts
+app.use(async (ctx, next) => {
+  if (ctx.path === '/healthz') {
+    ctx.body = 'ok';
+    return;
+  }
+
+  await next();
+});
+
+app.use(server('public', { defer: true }));
+```
+
+### Dynamic ignore rule
+
+```ts
+app.use(
+  server('public', {
+    ignore: path => path.endsWith('.map')
+  })
+);
+```
+
+### Dynamic stream buffer
+
+```ts
+app.use(
+  server('public', {
+    highWaterMark: (path, stats) => (stats.size > 10 * 1024 * 1024 ? 256 * 1024 : 64 * 1024)
+  })
+);
+```
+
 ## Features
 
-Support multipart range and download resumption.
+- Static file middleware for Koa.
+- Supports multipart range and download resumption.
+- Supports conditional requests (`ETag`, `Last-Modified`).
 
 ## License
 
