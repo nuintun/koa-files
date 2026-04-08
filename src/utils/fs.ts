@@ -6,7 +6,7 @@ import { Stats } from 'node:fs';
 import { Buffer } from 'node:buffer';
 
 interface Callback<T extends unknown[] = []> {
-  (error: Error | null, ...args: T): void;
+  (error: Error | null, ...rest: T): void;
 }
 
 export interface FileSystem {
