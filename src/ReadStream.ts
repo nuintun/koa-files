@@ -68,18 +68,18 @@ export class ReadStream extends Readable {
 
   /**
    * @private
-   * @method getRange
+   * @method #getRange
    */
-  private getRange(): Range | undefined {
+  #getRange(): Range | undefined {
     return this.#ranges[this.#currentRangeIndex];
   }
 
   /**
    * @private
-   * @method getPadding
+   * @method #getPadding
    * @param range The current range.
    */
-  private getPadding(range: Range): Buffer | undefined {
+  #getPadding(range: Range): Buffer | undefined {
     switch (this.#readState) {
       case ReadState.PREFIX:
         return range.prefix;
@@ -90,15 +90,15 @@ export class ReadStream extends Readable {
 
   /**
    * @private
-   * @method readPadding
+   * @method #readPadding
    * @param fd The file descriptor.
    * @param range The current range.
    * @param size The number of bytes to read.
    */
-  private readPadding(fd: number, range: Range, size: number): void {
+  #readPadding(fd: number, range: Range, size: number): void {
     let bytesRead = 0;
 
-    const padding = this.getPadding(range);
+    const padding = this.#getPadding(range);
 
     // If padding exists.
     if (padding != null) {
@@ -125,18 +125,18 @@ export class ReadStream extends Readable {
         case ReadState.PREFIX:
           this.#readState = ReadState.RANGE;
 
-          this.readFileRange(fd, range, size - bytesRead);
+          this.#readFileRange(fd, range, size - bytesRead);
           break;
         case ReadState.SUFFIX:
           this.#currentRangeIndex++;
           this.#readState = ReadState.PREFIX;
 
-          const nextRange = this.getRange();
+          const nextRange = this.#getRange();
 
           if (nextRange == null) {
             this.push(null);
           } else {
-            this.readPadding(fd, nextRange, size - bytesRead);
+            this.#readPadding(fd, nextRange, size - bytesRead);
           }
           break;
       }
@@ -145,12 +145,12 @@ export class ReadStream extends Readable {
 
   /**
    * @private
-   * @method readFileRange
+   * @method #readFileRange
    * @param fd The file descriptor.
    * @param range The current range.
    * @param size The number of bytes to read.
    */
-  private readFileRange(fd: number, range: Range, size: number): void {
+  #readFileRange(fd: number, range: Range, size: number): void {
     const { length } = range;
     const bytesRead = this.#bytesRead;
 
@@ -183,7 +183,7 @@ export class ReadStream extends Readable {
             this.#bytesRead = 0;
             this.#readState = ReadState.SUFFIX;
 
-            this.readPadding(fd, range, size - bytesRead);
+            this.#readPadding(fd, range, size - bytesRead);
           }
         }
       });
@@ -191,7 +191,7 @@ export class ReadStream extends Readable {
       this.#bytesRead = 0;
       this.#readState = ReadState.SUFFIX;
 
-      this.readPadding(fd, range, size);
+      this.#readPadding(fd, range, size);
     }
   }
 
@@ -203,7 +203,7 @@ export class ReadStream extends Readable {
   override _read(size: number): void {
     if (!this.#reading) {
       const fd = this.#fd;
-      const range = this.getRange();
+      const range = this.#getRange();
 
       // If fd or range is null, finish stream.
       if (fd == null || range == null) {
@@ -213,10 +213,10 @@ export class ReadStream extends Readable {
         switch (this.#readState) {
           case ReadState.PREFIX:
           case ReadState.SUFFIX:
-            this.readPadding(fd, range, size);
+            this.#readPadding(fd, range, size);
             break;
           case ReadState.RANGE:
-            this.readFileRange(fd, range, size);
+            this.#readFileRange(fd, range, size);
             break;
         }
       }
@@ -225,11 +225,11 @@ export class ReadStream extends Readable {
 
   /**
    * @private
-   * @method dispose
+   * @method #dispose
    * @param error The error.
    * @param callback The callback.
    */
-  private dispose(error: Error | null, callback: Callback): void {
+  #dispose(error: Error | null, callback: Callback): void {
     const fd = this.#fd;
 
     if (fd != null) {
@@ -254,10 +254,10 @@ export class ReadStream extends Readable {
     // Wait I/O completion.
     if (this.#reading) {
       this.once(DISPOSE_EVENT, disposeError => {
-        this.dispose(error ?? disposeError, callback);
+        this.#dispose(error ?? disposeError, callback);
       });
     } else {
-      this.dispose(error, callback);
+      this.#dispose(error, callback);
     }
   }
 }

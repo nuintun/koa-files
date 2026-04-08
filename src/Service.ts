@@ -72,13 +72,13 @@ export class Service {
 
   /**
    * @private
-   * @method setupHeaders
+   * @method #setupHeaders
    * @description Setup headers.
    * @param context The koa context.
    * @param path The file path.
    * @param stats The file stats.
    */
-  private async setupHeaders({ response }: Context, path: string, stats: Stats): Promise<void> {
+  async #setupHeaders({ response }: Context, path: string, stats: Stats): Promise<void> {
     const options = this.#options;
 
     // Set status.
@@ -183,7 +183,7 @@ export class Service {
     const { response } = context;
 
     // Setup headers.
-    await this.setupHeaders(context, path, stats);
+    await this.#setupHeaders(context, path, stats);
 
     // Conditional get support.
     if (isConditionalGET(context)) {
