@@ -2,7 +2,6 @@
  * @module Service
  */
 
-import createETag from 'etag';
 import { Context } from 'koa';
 import fs, { Stats } from 'node:fs';
 import { ReadStream } from './ReadStream';
@@ -10,7 +9,7 @@ import { isFunction } from './utils/type';
 import { FileSystem, stat } from './utils/fs';
 import { extname, join, resolve } from 'node:path';
 import { hasTrailingSlash, isOutRoot, unixify } from './utils/path';
-import { decodeURI, isConditionalGET, isPreconditionFailed, parseRanges } from './utils/http';
+import { createETag, decodeURI, isConditionalGET, isPreconditionFailed, parseRanges } from './utils/http';
 
 interface Headers {
   [key: string]: string | string[];
@@ -225,11 +224,6 @@ export class Service {
 
       // Unsatisfiable 416.
       return context.throw(416);
-    }
-
-    // 400.
-    if (ranges === -2) {
-      return context.throw(400);
     }
 
     // Set response body.
