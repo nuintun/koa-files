@@ -64,7 +64,7 @@
     "@types/koa": "^3.0.3",
     "@types/node": "^26.6.5",
     "@types/range-parser": "^1.2.7",
-    "dts-paths": "^2.2.1",
+    "dts-paths": "^2.2.2",
     "koa": "^3.2.1",
     "prettier": "^3.9.10",
     "rimraf": "^6.1.3",
